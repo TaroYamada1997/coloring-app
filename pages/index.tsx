@@ -6,16 +6,16 @@ import Head from 'next/head';
 const coloringImages = {
   '1': {
     path: './ten.jpg',
-    title: '塗り絵 1'
+    title: '塗り絵 1',
   },
   '2': {
     path: './ten.jpg',
-    title: '塗り絵 2'
+    title: '塗り絵 2',
   },
   '3': {
     path: './ten.jpg',
-    title: '塗り絵 3'
-  }
+    title: '塗り絵 3',
+  },
 };
 
 export default function Home() {
@@ -28,16 +28,16 @@ export default function Home() {
 
       <div className="max-w-xl mx-auto px-4">
         <h1 className="text-2xl font-bold mb-6">ぬりえアプリ</h1>
-        
+
         <div className="grid grid-cols-2 gap-4">
           {Object.entries(coloringImages).map(([id, image]) => (
-            <Link 
+            <Link
               href={`/coloring/${id}`}
               key={id}
               className="block bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
             >
-              <img 
-                src={image.path} 
+              <img
+                src={image.path}
                 alt={image.title}
                 className="w-full h-40 object-cover"
               />
