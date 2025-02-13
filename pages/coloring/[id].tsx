@@ -1,5 +1,5 @@
 // pages/coloring/[id].tsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Head from 'next/head';
 import { Eraser, Paintbrush, PaintBucket, Undo } from 'lucide-react';
 
@@ -12,7 +12,10 @@ export default function ColoringPage() {
   const [tool, setTool] = useState<Tool>('brush');
   const [history, setHistory] = useState<ImageData[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
-  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const [scale, setScale] = useState(1); // 拡大・縮小倍率
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasWrapperRef = useRef<HTMLDivElement>(null);
+  const lastTouchDistanceRef = useRef(0); // 最後のタッチ間の距離
 
   // キャンバスの状態を履歴に保存
   const saveState = useCallback(() => {
@@ -215,6 +218,27 @@ export default function ColoringPage() {
     };
   }, []);
 
+  const handlePinchZoomStart = (event: React.TouchEvent) => {
+    if (event.touches.length === 2) {
+      const dx = event.touches[0].clientX - event.touches[1].clientX;
+      const dy = event.touches[0].clientY - event.touches[1].clientY;
+      lastTouchDistanceRef.current = Math.sqrt(dx * dx + dy * dy);
+    }
+  };
+
+  const handlePinchZoomMove = (event: React.TouchEvent) => {
+    if (event.touches.length === 2) {
+      const dx = event.touches[0].clientX - event.touches[1].clientX;
+      const dy = event.touches[0].clientY - event.touches[1].clientY;
+      const touchDistance = Math.sqrt(dx * dx + dy * dy);
+
+      const scaleChange = touchDistance / lastTouchDistanceRef.current;
+      setScale((prevScale) => Math.min(Math.max(prevScale * scaleChange, 0.1), 2));
+
+      lastTouchDistanceRef.current = touchDistance;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 py-4">
       <Head>
@@ -265,6 +289,19 @@ export default function ColoringPage() {
               >
                 <Undo size={24} />
               </button>
+
+              {/* <div className="mt-4">
+              <label className="text-sm">拡大・縮小</label>
+              <input
+                type="range"
+                min="0.1"
+                max="2"
+                step="0.1"
+                value={scale}
+                onChange={handleZoomChange}
+                className="w-full"
+              />
+            </div> */}
             </div>
 
             <div className="flex items-center gap-4">
@@ -289,19 +326,29 @@ export default function ColoringPage() {
             </div>
           </div>
 
-          <canvas
-            ref={canvasRef}
-            onMouseDown={startDrawing}
-            onMouseMove={draw}
-            onMouseUp={stopDrawing}
-            onMouseOut={stopDrawing}
-            onTouchStart={startDrawing}
-            onTouchMove={draw}
-            onTouchEnd={stopDrawing}
-            className={`border border-gray-300 rounded-lg w-full touch-none ${
-              tool === 'fill' ? 'cursor-crosshair' : 'cursor-pointer'
-            }`}
-          />
+
+          <div
+            ref={canvasWrapperRef}
+            className="relative w-full overflow-hidden"
+            onTouchStart={handlePinchZoomStart}
+            onTouchMove={handlePinchZoomMove}
+          >
+            <canvas
+              ref={canvasRef}
+              onMouseDown={startDrawing}
+              onMouseMove={draw}
+              onMouseUp={stopDrawing}
+              onMouseOut={stopDrawing}
+              onTouchStart={startDrawing}
+              onTouchMove={draw}
+              onTouchEnd={stopDrawing}
+              className="border border-gray-300 rounded-lg w-full touch-none"
+              style={{
+                transform: `scale(${scale})`, // 拡大・縮小倍率を反映
+                transformOrigin: 'top left', // 拡大縮小時に左上を基準にする
+              }}
+            />
+          </div>
 
           <button
             onClick={saveImage}
