@@ -198,7 +198,7 @@ export default function ColoringPage() {
     if (!ctx) return;
 
     const img = new Image();
-    img.src = '/PNG背景透過.png';
+    img.src = '/PNG背景白あり.png';
 
     img.onload = () => {
       const maxWidth = Math.min(window.innerWidth - 40, 800);
