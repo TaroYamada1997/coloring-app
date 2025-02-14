@@ -1,134 +1,136 @@
-import React, { useEffect, useRef } from 'react';
-import * as THREE from 'three';
-import { ArMarkerControls, ArToolkitContext, ArToolkitSource } from '@ar-js-org/ar.js/three.js/build/ar-threex';
+import Image from 'next/image';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface ARCameraProps {
   canvasImage: string;
 }
 
 export default function ARCamera({ canvasImage }: ARCameraProps) {
-  const sceneRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [error, setError] = useState<string>('');
+  const [imagePosition, setImagePosition] = useState({ x: 50, y: 50, scale: 1 });
 
   useEffect(() => {
-    if (!sceneRef.current) return;
+    startCamera();
+    return () => stopCamera();
+  }, []);
 
-    // AR.js の初期化
-    const arToolkitSource = new ArToolkitSource({
-      sourceType: 'webcam',
-      sourceWidth: window.innerWidth,
-      sourceHeight: window.innerHeight,
-      displayWidth: window.innerWidth,
-      displayHeight: window.innerHeight,
-    });
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
+      });
 
-    // カメラソースの初期化
-    arToolkitSource.init(() => {
-      // カメラの準備ができたらリサイズを実行
-      setTimeout(() => {
-        onResize();
-      }, 200);
-    });
-
-    // リサイズハンドラ
-    const onResize = () => {
-      arToolkitSource.onResizeElement();
-      arToolkitSource.copyElementSizeTo(renderer.domElement);
-      if (arToolkitContext.arController !== null) {
-        arToolkitSource.copyElementSizeTo(arToolkitContext.arController.canvas);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
       }
-    };
+    } catch (err) {
+      setError('カメラの起動に失敗しました。カメラへのアクセスを許可してください。');
+      console.error('Camera error:', err);
+    }
+  };
 
-    window.addEventListener('resize', onResize);
+  const stopCamera = () => {
+    if (videoRef.current?.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+  };
 
-    // シーンの設定
-    const scene = new THREE.Scene();
-    const camera = new THREE.Camera();
-    scene.add(camera);
-
-    const renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: true,
-      preserveDrawingBuffer: true,
+  const moveImage = (direction: 'up' | 'down' | 'left' | 'right') => {
+    const MOVE_STEP = 10;
+    setImagePosition(prev => {
+      const updates = {
+        up: { y: prev.y - MOVE_STEP },
+        down: { y: prev.y + MOVE_STEP },
+        left: { x: prev.x - MOVE_STEP },
+        right: { x: prev.x + MOVE_STEP },
+      };
+      return {
+        ...prev,
+        ...updates[direction],
+      };
     });
-    
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.domElement.style.position = 'absolute';
-    renderer.domElement.style.top = '0';
-    renderer.domElement.style.left = '0';
-    renderer.domElement.style.width = '100%';
-    renderer.domElement.style.height = '100%';
-    sceneRef.current.appendChild(renderer.domElement);
-
-    // AR コンテキストの初期化
-    const arToolkitContext = new ArToolkitContext({
-      cameraParametersUrl: '/camera_para.dat',
-      detectionMode: 'mono',
-      maxDetectionRate: 60,
-      canvasWidth: window.innerWidth,
-      canvasHeight: window.innerHeight,
-    });
-
-    arToolkitContext.init(() => {
-      camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
-    });
-
-    // マーカーの設定
-    const markerRoot = new THREE.Group();
-    scene.add(markerRoot);
-
-    new ArMarkerControls(arToolkitContext, markerRoot, {
-      type: 'pattern',
-      patternUrl: '/pattern-marker.patt',
-      changeMatrixMode: 'cameraTransformMatrix'
-    });
-
-    // 色塗りした画像をテクスチャとして使用
-    const texture = new THREE.TextureLoader().load(canvasImage);
-    const geometry = new THREE.PlaneGeometry(1, 1);
-    const material = new THREE.MeshBasicMaterial({
-      map: texture,
-      transparent: true,
-      side: THREE.DoubleSide,
-    });
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.rotation.x = -Math.PI / 2;
-    markerRoot.add(mesh);
-
-    // アニメーションループ
-    const animate = () => {
-      requestAnimationFrame(animate);
-
-      if (arToolkitSource.ready) {
-        arToolkitContext.update(arToolkitSource.domElement);
-      }
-
-      renderer.render(scene, camera);
-    };
-
-    animate();
-
-    // クリーンアップ
-    return () => {
-      window.removeEventListener('resize', onResize);
-      if (sceneRef.current) {
-        sceneRef.current.removeChild(renderer.domElement);
-      }
-    };
-  }, [canvasImage]);
+  };
 
   return (
-    <div 
-      ref={sceneRef} 
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        overflow: 'hidden',
-        zIndex: 1000,
-        backgroundColor: 'transparent',
-      }}
-    />
+    <div className="fixed inset-0 bg-black">
+      <div className="relative w-full h-full">
+        {error && (
+          <div className="absolute top-4 left-4 right-4 z-50 bg-red-500 text-white p-4 rounded">
+            {error}
+          </div>
+        )}
+        
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          className="w-full h-full object-cover"
+        />
+
+        <Image
+          src={canvasImage}
+          alt="Colored Image"
+          style={{
+            position: 'absolute',
+            left: `${imagePosition.x}px`,
+            top: `${imagePosition.y}px`,
+            transform: `scale(${imagePosition.scale})`,
+            width: '200px',
+            height: 'auto',
+          }}
+        />
+
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-2">
+          <button
+            onClick={() => moveImage('up')}
+            className="bg-white p-2 rounded-full shadow-lg"
+          >
+            ↑
+          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => moveImage('left')}
+              className="bg-white p-2 rounded-full shadow-lg"
+            >
+              ←
+            </button>
+            <button
+              onClick={() => moveImage('right')}
+              className="bg-white p-2 rounded-full shadow-lg"
+            >
+              →
+            </button>
+          </div>
+          <button
+            onClick={() => moveImage('down')}
+            className="bg-white p-2 rounded-full shadow-lg"
+          >
+            ↓
+          </button>
+        </div>
+
+        <button
+          onClick={() => setImagePosition(prev => ({
+            ...prev,
+            scale: prev.scale + 0.1
+          }))}
+          className="absolute top-4 right-16 bg-white p-2 rounded-full shadow-lg"
+        >
+          +
+        </button>
+        <button
+          onClick={() => setImagePosition(prev => ({
+            ...prev,
+            scale: Math.max(0.1, prev.scale - 0.1)
+          }))}
+          className="absolute top-4 right-4 bg-white p-2 rounded-full shadow-lg"
+        >
+          -
+        </button>
+      </div>
+    </div>
   );
 }
