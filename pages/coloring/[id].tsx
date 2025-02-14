@@ -9,8 +9,8 @@ type Tool = 'brush' | 'eraser' | 'fill';
 
 
 export default function ColoringPage() {
-    const router = useRouter();
-    const { id } = router.query;
+  const router = useRouter();
+  const { id } = router.query;
   const [color, setColor] = useState('#000000');
   const [brushSize, setBrushSize] = useState(5);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -64,7 +64,14 @@ export default function ColoringPage() {
       const startR = pixels[startPos];
       const startG = pixels[startPos + 1];
       const startB = pixels[startPos + 2];
-      // const startA = pixels[startPos + 3];
+      const startA = pixels[startPos + 3];
+
+      // 黒い枠線の判定（RGBがすべて30未満で、アルファ値が0でない場合を枠線とみなす）
+      const isOutline = (r: number, g: number, b: number, a: number) => 
+        r < 30 && g < 30 && b < 30 && a > 0;
+
+      // クリック位置が枠線の場合は処理を中止
+      if (isOutline(startR, startG, startB, startA)) return;
 
       // 新しい色をRGBA形式に変換
       const fillColor = {
@@ -88,6 +95,10 @@ export default function ColoringPage() {
         const r = pixels[pos];
         const g = pixels[pos + 1];
         const b = pixels[pos + 2];
+        const a = pixels[pos + 3];
+
+        // 枠線の場合はスキップ
+        if (isOutline(r, g, b, a)) continue;
 
         // 現在のピクセルが開始位置の色と近似しているかチェック
         if (
@@ -251,12 +262,17 @@ export default function ColoringPage() {
   return (
     <div className="min-h-screen bg-gray-100 py-4">
       <Head>
-        <title>ぬりえアプリ</title>
-        {/* <meta name="description" content={`${imageData.title}のぬりえページ`} /> */}
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
-        />
+        {id && (
+          <div>
+                <title>{coloringMap[id as keyof typeof coloringMap].title}</title>
+                <meta name="description" content={`${coloringMap[id as keyof typeof coloringMap].title}のぬりえページ`} />
+                <meta
+                  name="viewport"
+                  content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+                />
+          </div>
+        )
+        }
       </Head>
 
       <div className="max-w-xl mx-auto px-4">
