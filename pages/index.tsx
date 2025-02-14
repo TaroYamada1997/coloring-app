@@ -3,6 +3,7 @@ import React from 'react';
 import Link from 'next/link';
 import Head from 'next/head';
 import { coloringMap } from '@/public/const/imagePath';
+import Image from 'next/image';
 
 export default function Home() {
   return (
@@ -22,9 +23,11 @@ export default function Home() {
               key={id}
               className="block bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
             >
-              <img
+              <Image
                 src={image.path}
                 alt={image.title}
+                height={100}
+                width={100}
                 className="w-full h-40 object-cover"
               />
               <div className="p-4">
