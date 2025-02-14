@@ -1,6 +1,12 @@
 declare module '@ar-js-org/ar.js/three.js/build/ar-threex' {
     export class ArToolkitSource {
-      constructor(params: { sourceType: string });
+      constructor(params: {
+        sourceType: string;
+        sourceWidth?: number;
+        sourceHeight?: number;
+        displayWidth?: number;
+        displayHeight?: number;
+      });
       init(callback: () => void): void;
       ready: boolean;
       domElement: HTMLElement;
@@ -12,6 +18,9 @@ declare module '@ar-js-org/ar.js/three.js/build/ar-threex' {
       constructor(params: {
         cameraParametersUrl: string;
         detectionMode: string;
+        maxDetectionRate?: number;
+        canvasWidth?: number;
+        canvasHeight?: number;
       });
       init(callback: () => void): void;
       update(domElement: HTMLElement): void;
@@ -28,6 +37,7 @@ declare module '@ar-js-org/ar.js/three.js/build/ar-threex' {
         params: {
           type: string;
           patternUrl: string;
+          changeMatrixMode?: string;
         }
       );
     }

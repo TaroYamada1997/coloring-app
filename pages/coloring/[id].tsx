@@ -403,10 +403,10 @@ export default function ColoringPage() {
       </button>
 
       {showAR && (
-        <div className="fixed inset-0 z-50">
+        <div className="fixed inset-0 z-50 bg-black">
           <button
             onClick={() => setShowAR(false)}
-            className="absolute top-4 right-4 z-10 bg-white p-2 rounded-full shadow-lg"
+            className="absolute top-4 right-4 z-[1001] bg-white p-2 rounded-full shadow-lg"
           >
             閉じる
           </button>
