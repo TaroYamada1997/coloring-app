@@ -2,10 +2,15 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Head from 'next/head';
 import { Eraser, Paintbrush, PaintBucket, Undo } from 'lucide-react';
+import { useRouter } from 'next/router';
+import { coloringMap } from '@/public/const/imagePath';
 
 type Tool = 'brush' | 'eraser' | 'fill';
 
+
 export default function ColoringPage() {
+    const router = useRouter();
+    const { id } = router.query;
   const [color, setColor] = useState('#000000');
   const [brushSize, setBrushSize] = useState(5);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -192,13 +197,18 @@ export default function ColoringPage() {
 
   // 初期画像の読み込み時に最初の状態を保存
   useEffect(() => {
+    if (!id || typeof id !== 'string') return;
+    
+    const coloringInfo = coloringMap[id as keyof typeof coloringMap];
+    if (!coloringInfo) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     const img = new Image();
-    img.src = '/PNG背景白あり.png';
+    img.src = coloringInfo.path;
 
     img.onload = () => {
       const maxWidth = Math.min(window.innerWidth - 40, 800);
@@ -211,12 +221,11 @@ export default function ColoringPage() {
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
 
-      // 初期状態を履歴に保存
       const initialState = ctx.getImageData(0, 0, canvas.width, canvas.height);
       setHistory([initialState]);
       setHistoryIndex(0);
     };
-  }, []);
+  }, [id]);
 
   const handlePinchZoomStart = (event: React.TouchEvent) => {
     if (event.touches.length === 2) {
