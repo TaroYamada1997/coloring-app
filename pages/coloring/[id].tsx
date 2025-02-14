@@ -4,6 +4,7 @@ import Head from 'next/head';
 import { Eraser, Paintbrush, PaintBucket, Undo } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { coloringMap } from '@/public/const/imagePath';
+import ARCamera from '../components/ARCamera';
 
 type Tool = 'brush' | 'eraser' | 'fill';
 
@@ -21,6 +22,9 @@ export default function ColoringPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const lastTouchDistanceRef = useRef(0); // 最後のタッチ間の距離
+
+  const [showAR, setShowAR] = useState(false);
+  const [canvasImage, setCanvasImage] = useState<string>('');
 
   // キャンバスの状態を履歴に保存
   const saveState = useCallback(() => {
@@ -259,6 +263,16 @@ export default function ColoringPage() {
     }
   };
 
+  const handleARClick = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    // キャンバスの現在の状態を画像として取得
+    const image = canvas.toDataURL('image/png');
+    setCanvasImage(image);
+    setShowAR(true);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 py-4">
       <Head>
@@ -381,6 +395,24 @@ export default function ColoringPage() {
           >
             保存する
           </button>
+          <button
+        onClick={handleARClick}
+        className="mt-4 w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+      >
+        カメラを起動してARで遊ぶ
+      </button>
+
+      {showAR && (
+        <div className="fixed inset-0 z-50">
+          <button
+            onClick={() => setShowAR(false)}
+            className="absolute top-4 right-4 z-10 bg-white p-2 rounded-full shadow-lg"
+          >
+            閉じる
+          </button>
+          <ARCamera canvasImage={canvasImage} />
+        </div>
+      )}
         </div>
       </div>
     </div>
