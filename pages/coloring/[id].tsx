@@ -70,7 +70,7 @@ export default function ColoringPage() {
       const startA = pixels[startPos + 3];
 
       // 黒い枠線の判定（RGBがすべて30未満で、アルファ値が0でない場合を枠線とみなす）
-      const isOutline = (r: number, g: number, b: number, a: number) => 
+      const isOutline = (r: number, g: number, b: number, a: number) =>
         r < 30 && g < 30 && b < 30 && a > 0;
 
       // クリック位置が枠線の場合は処理を中止
@@ -212,7 +212,7 @@ export default function ColoringPage() {
   // 初期画像の読み込み時に最初の状態を保存
   useEffect(() => {
     if (!id || typeof id !== 'string') return;
-    
+
     const coloringInfo = COLORINGMAP[id as keyof typeof COLORINGMAP];
     if (!coloringInfo) return;
 
@@ -256,7 +256,9 @@ export default function ColoringPage() {
       const touchDistance = Math.sqrt(dx * dx + dy * dy);
 
       const scaleChange = touchDistance / lastTouchDistanceRef.current;
-      setScale((prevScale) => Math.min(Math.max(prevScale * scaleChange, 0.1), 2));
+      setScale((prevScale) =>
+        Math.min(Math.max(prevScale * scaleChange, 0.1), 2),
+      );
 
       lastTouchDistanceRef.current = touchDistance;
     }
@@ -265,7 +267,7 @@ export default function ColoringPage() {
   const handleARClick = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     // キャンバスの現在の状態を画像として取得
     const image = canvas.toDataURL('image/png');
     setCanvasImage(image);
@@ -277,15 +279,17 @@ export default function ColoringPage() {
       <Head>
         {id && (
           <div>
-                <title>{COLORINGMAP[id as keyof typeof COLORINGMAP].title}</title>
-                <meta name="description" content={`${COLORINGMAP[id as keyof typeof COLORINGMAP].title}のぬりえページ`} />
-                <meta
-                  name="viewport"
-                  content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
-                />
+            <title>{COLORINGMAP[id as keyof typeof COLORINGMAP].title}</title>
+            <meta
+              name="description"
+              content={`${COLORINGMAP[id as keyof typeof COLORINGMAP].title}のぬりえページ`}
+            />
+            <meta
+              name="viewport"
+              content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+            />
           </div>
-        )
-        }
+        )}
       </Head>
 
       <div className="max-w-xl mx-auto px-4">
@@ -299,7 +303,9 @@ export default function ColoringPage() {
                   key={colorOption}
                   onClick={() => setColor(colorOption)}
                   className={`w-10 h-10 rounded-full border-2 transition-transform ${
-                    color === colorOption ? 'border-gray-600 scale-110' : 'border-gray-200'
+                    color === colorOption
+                      ? 'border-gray-600 scale-110'
+                      : 'border-gray-200'
                   }`}
                   style={{ backgroundColor: colorOption }}
                   aria-label={`色を${colorOption}に変更`}
@@ -386,23 +392,23 @@ export default function ColoringPage() {
             保存する
           </button>
           <button
-        onClick={handleARClick}
-        className="mt-4 w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
-      >
-        カメラを起動してARで遊ぶ
-      </button>
-
-      {showAR && (
-        <div className="fixed inset-0 z-50">
-          <button
-            onClick={() => setShowAR(false)}
-            className="absolute top-4 right-4 z-[1001] bg-white p-2 rounded-full shadow-lg"
+            onClick={handleARClick}
+            className="mt-4 w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
           >
-            閉じる
+            カメラを起動してARで遊ぶ
           </button>
-          <ARCamera canvasImage={canvasImage} />
-        </div>
-      )}
+
+          {showAR && (
+            <div className="fixed inset-0 z-50">
+              <button
+                onClick={() => setShowAR(false)}
+                className="absolute top-4 right-4 z-[1001] bg-white p-2 rounded-full shadow-lg"
+              >
+                閉じる
+              </button>
+              <ARCamera canvasImage={canvasImage} />
+            </div>
+          )}
         </div>
       </div>
     </div>
