@@ -1,13 +1,12 @@
-// pages/coloring/[id].tsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Head from 'next/head';
 import { Eraser, Paintbrush, PaintBucket, Undo } from 'lucide-react';
 import { useRouter } from 'next/router';
-import { coloringMap } from '@/public/const/imagePath';
+import { COLORINGMAP } from '@/public/const/imagePath';
 import ARCamera from '../components/ARCamera';
+import { COLORS } from '@/public/const/colors';
 
 type Tool = 'brush' | 'eraser' | 'fill';
-
 
 export default function ColoringPage() {
   const router = useRouter();
@@ -214,7 +213,7 @@ export default function ColoringPage() {
   useEffect(() => {
     if (!id || typeof id !== 'string') return;
     
-    const coloringInfo = coloringMap[id as keyof typeof coloringMap];
+    const coloringInfo = COLORINGMAP[id as keyof typeof COLORINGMAP];
     if (!coloringInfo) return;
 
     const canvas = canvasRef.current;
@@ -278,8 +277,8 @@ export default function ColoringPage() {
       <Head>
         {id && (
           <div>
-                <title>{coloringMap[id as keyof typeof coloringMap].title}</title>
-                <meta name="description" content={`${coloringMap[id as keyof typeof coloringMap].title}のぬりえページ`} />
+                <title>{COLORINGMAP[id as keyof typeof COLORINGMAP].title}</title>
+                <meta name="description" content={`${COLORINGMAP[id as keyof typeof COLORINGMAP].title}のぬりえページ`} />
                 <meta
                   name="viewport"
                   content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
@@ -295,62 +294,20 @@ export default function ColoringPage() {
         <div className="bg-white rounded-lg shadow-lg p-4">
           <div className="mb-4 flex flex-wrap gap-4 items-center">
             <div className="flex gap-2">
-              <button
-                onClick={() => setTool('brush')}
-                className={`p-2 rounded ${tool === 'brush' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-                title="ブラシ"
-              >
-                <Paintbrush size={24} />
-              </button>
-              <button
-                onClick={() => setTool('eraser')}
-                className={`p-2 rounded ${tool === 'eraser' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-                title="消しゴム"
-              >
-                <Eraser size={24} />
-              </button>
-              <button
-                onClick={() => setTool('fill')}
-                className={`p-2 rounded ${tool === 'fill' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-                title="塗りつぶし"
-              >
-                <PaintBucket size={24} />
-              </button>
-              <button
-                onClick={undo}
-                disabled={historyIndex <= 0}
-                className={`p-2 rounded ${
-                  historyIndex <= 0
-                    ? 'bg-gray-100 text-gray-400'
-                    : 'bg-gray-200 hover:bg-gray-300'
-                }`}
-                title="元に戻す"
-              >
-                <Undo size={24} />
-              </button>
-
-              {/* <div className="mt-4">
-              <label className="text-sm">拡大・縮小</label>
-              <input
-                type="range"
-                min="0.1"
-                max="2"
-                step="0.1"
-                value={scale}
-                onChange={handleZoomChange}
-                className="w-full"
-              />
-            </div> */}
+              {COLORS.map((colorOption) => (
+                <button
+                  key={colorOption}
+                  onClick={() => setColor(colorOption)}
+                  className={`w-10 h-10 rounded-full border-2 transition-transform ${
+                    color === colorOption ? 'border-gray-600 scale-110' : 'border-gray-200'
+                  }`}
+                  style={{ backgroundColor: colorOption }}
+                  aria-label={`色を${colorOption}に変更`}
+                />
+              ))}
             </div>
 
             <div className="flex items-center gap-4">
-              <input
-                type="color"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                className="w-16 h-8"
-                title="色を選択"
-              />
               <div>
                 <input
                   type="range"
@@ -365,6 +322,39 @@ export default function ColoringPage() {
             </div>
           </div>
 
+          <div className="flex justify-center gap-4 mt-4 mb-4">
+            <button
+              onClick={() => setTool('brush')}
+              className={`p-2 rounded ${
+                tool === 'brush' ? 'bg-blue-100' : 'hover:bg-gray-100'
+              }`}
+            >
+              <Paintbrush className="w-6 h-6" />
+            </button>
+            <button
+              onClick={() => setTool('fill')}
+              className={`p-2 rounded ${
+                tool === 'fill' ? 'bg-blue-100' : 'hover:bg-gray-100'
+              }`}
+            >
+              <PaintBucket className="w-6 h-6" />
+            </button>
+            <button
+              onClick={() => setTool('eraser')}
+              className={`p-2 rounded ${
+                tool === 'eraser' ? 'bg-blue-100' : 'hover:bg-gray-100'
+              }`}
+            >
+              <Eraser className="w-6 h-6" />
+            </button>
+            <button
+              onClick={undo}
+              className="p-2 rounded hover:bg-gray-100"
+              disabled={historyIndex <= 0}
+            >
+              <Undo className="w-6 h-6" />
+            </button>
+          </div>
 
           <div
             ref={canvasWrapperRef}

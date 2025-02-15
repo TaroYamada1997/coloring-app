@@ -2,7 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Head from 'next/head';
-import { coloringMap } from '@/public/const/imagePath';
+import { COLORINGMAP } from '@/public/const/imagePath';
 import Image from 'next/image';
 
 export default function Home() {
@@ -17,7 +17,7 @@ export default function Home() {
         <h1 className="text-2xl font-bold mb-6">ぬりえアプリ</h1>
 
         <div className="grid grid-cols-2 gap-4">
-          {Object.entries(coloringMap).map(([id, image]) => (
+          {Object.entries(COLORINGMAP).map(([id, image]) => (
             <Link
               href={`/coloring/${id}`}
               key={id}
