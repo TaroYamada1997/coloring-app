@@ -225,21 +225,26 @@ export default function ColoringPage() {
     img.src = coloringInfo.path;
 
     img.onload = () => {
-      const maxWidth = Math.min(window.innerWidth - 40, 800);
-      const scale = maxWidth / img.width;
+      // 元の画像サイズを維持したまま描画
+      canvas.width = img.width;
+      canvas.height = img.height;
 
-      canvas.width = maxWidth;
-      canvas.height = img.height * scale;
+      // アンチエイリアスを無効化
+      ctx.imageSmoothingEnabled = false;
+      
+      // 画像を描画
+      ctx.drawImage(img, 0, 0);
 
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
+      // スタイルでサイズを調整（実際のピクセルはそのまま）
+      canvas.style.width = '100%';
+      canvas.style.height = 'auto';
 
       const initialState = ctx.getImageData(0, 0, canvas.width, canvas.height);
       setHistory([initialState]);
       setHistoryIndex(0);
     };
   }, [id]);
+
 
   const handlePinchZoomStart = (event: React.TouchEvent) => {
     if (event.touches.length === 2) {
