@@ -2,9 +2,9 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Head from 'next/head';
 import { Eraser, Paintbrush, PaintBucket, Undo } from 'lucide-react';
 import { useRouter } from 'next/router';
-import { COLORINGMAP } from '@/public/const/imagePath';
+import { COLORINGMAP } from '@/public/constants/imagePath';
 import ARCamera from '../components/ARCamera';
-import { COLORS } from '@/public/const/colors';
+import { COLORS } from '@/public/constants/colors';
 
 type Tool = 'brush' | 'eraser' | 'fill';
 

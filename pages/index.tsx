@@ -2,7 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Head from 'next/head';
-import { COLORINGMAP } from '@/public/const/imagePath';
+import { COLORINGMAP } from '@/public/constants/imagePath';
 import Image from 'next/image';
 
 export default function Home() {
