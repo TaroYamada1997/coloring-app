@@ -232,7 +232,7 @@ export default function ColoringPage() {
 
       // アンチエイリアスを無効化
       ctx.imageSmoothingEnabled = false;
-      
+
       // 画像を描画
       ctx.drawImage(img, 0, 0);
 
@@ -245,7 +245,6 @@ export default function ColoringPage() {
       setHistoryIndex(0);
     };
   }, [id]);
-
 
   const handlePinchZoomStart = (event: React.TouchEvent) => {
     if (event.touches.length === 2) {
