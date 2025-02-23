@@ -4,7 +4,7 @@ import { Eraser, Paintbrush, PaintBucket, Undo } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { COLORINGMAP } from '@/public/constants/imagePath';
 import ARCamera from '../components/ARCamera';
-import { COLORS } from '@/public/constants/colors';
+import { DEFAULT_COLORS } from '@/public/constants/colors';
 
 type Tool = 'brush' | 'eraser' | 'fill';
 
@@ -24,6 +24,7 @@ export default function ColoringPage() {
 
   const [showAR, setShowAR] = useState(false);
   const [canvasImage, setCanvasImage] = useState<string>('');
+  const [colorMode, setColorMode] = useState<'default' | 'palette'>('default');
 
   // キャンバスの状態を履歴に保存
   const saveState = useCallback(() => {
@@ -301,35 +302,74 @@ export default function ColoringPage() {
         {/* <h1 className="text-2xl font-bold mb-4">{imageData.title}</h1> */}
 
         <div className="bg-white rounded-lg shadow-lg p-4">
-          <div className="mb-4 flex flex-wrap gap-4 items-center">
-            <div className="flex gap-2">
-              {COLORS.map((colorOption) => (
-                <button
-                  key={colorOption}
-                  onClick={() => setColor(colorOption)}
-                  className={`w-10 h-10 rounded-full border-2 transition-transform ${
-                    color === colorOption
-                      ? 'border-gray-600 scale-110'
-                      : 'border-gray-200'
-                  }`}
-                  style={{ backgroundColor: colorOption }}
-                  aria-label={`色を${colorOption}に変更`}
-                />
-              ))}
-            </div>
+          {/* カラーモード切り替えボタン */}
+          <div className="flex justify-center gap-4 mb-4">
+            <button
+              onClick={() => setColorMode('default')}
+              className={`px-4 py-2 rounded-lg ${
+                colorMode === 'default'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-200 hover:bg-gray-300'
+              }`}
+            >
+              デフォルトカラー
+            </button>
+            <button
+              onClick={() => setColorMode('palette')}
+              className={`px-4 py-2 rounded-lg ${
+                colorMode === 'palette'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-200 hover:bg-gray-300'
+              }`}
+            >
+              カラーパレット
+            </button>
+          </div>
 
-            <div className="flex items-center gap-4">
-              <div>
+          {/* カラー選択部分 */}
+          <div className="mb-4">
+            {colorMode === 'default' ? (
+              // デフォルトカラー
+              <div className="flex justify-center gap-2">
+                {DEFAULT_COLORS.map((colorOption) => (
+                  <button
+                    key={colorOption}
+                    onClick={() => setColor(colorOption)}
+                    className={`w-10 h-10 rounded-full border-2 transition-transform ${
+                      color === colorOption
+                        ? 'border-gray-600 scale-110'
+                        : 'border-gray-200'
+                    }`}
+                    style={{ backgroundColor: colorOption }}
+                    aria-label={`色を${colorOption}に変更`}
+                  />
+                ))}
+              </div>
+            ) : (
+              // カラーパレット
+              <div className="flex justify-center">
                 <input
-                  type="range"
-                  min="1"
-                  max="20"
-                  value={brushSize}
-                  onChange={(e) => setBrushSize(Number(e.target.value))}
-                  className="w-32"
-                  title="ブラシサイズ"
+                  type="color"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="w-20 h-20"
+                  title="カラーパレット"
                 />
               </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div>
+              <input
+                type="range"
+                min="1"
+                max="20"
+                value={brushSize}
+                onChange={(e) => setBrushSize(Number(e.target.value))}
+                className="w-32"
+                title="ブラシサイズ"
+              />
             </div>
           </div>
 

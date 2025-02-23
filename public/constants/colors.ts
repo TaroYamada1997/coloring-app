@@ -1,5 +1,5 @@
 // 定数として色を定義
-export const COLORS = [
+export const DEFAULT_COLORS = [
   '#FF0000', // 赤
   '#FFA500', // オレンジ
   '#FFFF00', // 黄
