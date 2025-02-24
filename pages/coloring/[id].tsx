@@ -17,14 +17,16 @@ export default function ColoringPage() {
   const [tool, setTool] = useState<Tool>('brush');
   const [history, setHistory] = useState<ImageData[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
-  const [scale, setScale] = useState(1); // 拡大・縮小倍率
+  const [scale, setScale] = useState(1);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
-  const lastTouchDistanceRef = useRef(0); // 最後のタッチ間の距離
+  const lastTouchDistanceRef = useRef(0);
+  const lastTouchCenterRef = useRef({ x: 0, y: 0 });
 
   const [showAR, setShowAR] = useState(false);
   const [canvasImage, setCanvasImage] = useState<string>('');
   const [colorMode, setColorMode] = useState<'default' | 'palette'>('default');
+  const [isZooming, setIsZooming] = useState(false);
 
   // キャンバスの状態を履歴に保存
   const saveState = useCallback(() => {
@@ -154,7 +156,51 @@ export default function ColoringPage() {
     };
   };
 
+  const handlePinchZoomStart = (event: React.TouchEvent) => {
+    if (event.touches.length === 2) {
+      event.preventDefault(); // デフォルトの動作を防止
+      setIsZooming(true);  // ズーム中フラグを設定
+
+      // 2本指のタッチ開始時の距離を計算
+      const dx = event.touches[0].clientX - event.touches[1].clientX;
+      const dy = event.touches[0].clientY - event.touches[1].clientY;
+      lastTouchDistanceRef.current = Math.sqrt(dx * dx + dy * dy);
+
+      // タッチの中心点を計算
+      lastTouchCenterRef.current = {
+        x: (event.touches[0].clientX + event.touches[1].clientX) / 2,
+        y: (event.touches[0].clientY + event.touches[1].clientY) / 2,
+      };
+    }
+  };
+
+  const handlePinchZoomMove = (event: React.TouchEvent) => {
+    if (event.touches.length === 2) {
+      event.preventDefault(); // デフォルトの動作を防止
+      setIsZooming(true);  // ズーム中フラグを設定
+
+      // 現在の2本指の距離を計算
+      const dx = event.touches[0].clientX - event.touches[1].clientX;
+      const dy = event.touches[0].clientY - event.touches[1].clientY;
+      const touchDistance = Math.sqrt(dx * dx + dy * dy);
+
+      // スケール変更を計算
+      const scaleChange = touchDistance / lastTouchDistanceRef.current;
+      const newScale = Math.min(Math.max(scale * scaleChange, 0.5), 3);
+
+      setScale(newScale);
+      lastTouchDistanceRef.current = touchDistance;
+    }
+  };
+
+  const handlePinchZoomEnd = () => {
+    setIsZooming(false);  // ズーム中フラグを解除
+  };
+
   const startDrawing = (event: React.TouchEvent | React.MouseEvent) => {
+    // ズーム中は描画を開始しない
+    if (isZooming) return;
+
     event.preventDefault();
     const coords = getCoordinates(event);
     if (!coords) return;
@@ -175,6 +221,9 @@ export default function ColoringPage() {
   };
 
   const draw = (event: React.TouchEvent | React.MouseEvent) => {
+    // ズーム中は描画しない
+    if (isZooming) return;
+
     event.preventDefault();
     if (!isDrawing || tool === 'fill') return;
 
@@ -245,29 +294,6 @@ export default function ColoringPage() {
       setHistoryIndex(0);
     };
   }, [id]);
-
-  const handlePinchZoomStart = (event: React.TouchEvent) => {
-    if (event.touches.length === 2) {
-      const dx = event.touches[0].clientX - event.touches[1].clientX;
-      const dy = event.touches[0].clientY - event.touches[1].clientY;
-      lastTouchDistanceRef.current = Math.sqrt(dx * dx + dy * dy);
-    }
-  };
-
-  const handlePinchZoomMove = (event: React.TouchEvent) => {
-    if (event.touches.length === 2) {
-      const dx = event.touches[0].clientX - event.touches[1].clientX;
-      const dy = event.touches[0].clientY - event.touches[1].clientY;
-      const touchDistance = Math.sqrt(dx * dx + dy * dy);
-
-      const scaleChange = touchDistance / lastTouchDistanceRef.current;
-      setScale((prevScale) =>
-        Math.min(Math.max(prevScale * scaleChange, 0.1), 2),
-      );
-
-      lastTouchDistanceRef.current = touchDistance;
-    }
-  };
 
   const handleARClick = () => {
     const canvas = canvasRef.current;
@@ -411,6 +437,7 @@ export default function ColoringPage() {
             className="relative w-full overflow-hidden"
             onTouchStart={handlePinchZoomStart}
             onTouchMove={handlePinchZoomMove}
+            onTouchEnd={handlePinchZoomEnd}
           >
             <canvas
               ref={canvasRef}
@@ -423,8 +450,9 @@ export default function ColoringPage() {
               onTouchEnd={stopDrawing}
               className="border border-gray-300 rounded-lg w-full touch-none"
               style={{
-                transform: `scale(${scale})`, // 拡大・縮小倍率を反映
-                transformOrigin: 'top left', // 拡大縮小時に左上を基準にする
+                transform: `scale(${scale})`,
+                transformOrigin: 'center center',
+                transition: 'transform 0.1s ease-out',
               }}
             />
           </div>
