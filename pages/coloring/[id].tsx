@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Head from 'next/head';
-import { Eraser, Paintbrush, PaintBucket, Undo, Move } from 'lucide-react';
+import { PaintBucket, Undo, Move } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { COLORINGMAP } from '@/public/constants/imagePath';
 import ARCamera from '../components/ARCamera';
@@ -368,7 +368,7 @@ export default function ColoringPage() {
                   : 'bg-gray-200 hover:bg-gray-300'
               }`}
             >
-              デフォルトカラー
+              春色パレット
             </button>
             <button
               onClick={() => setColorMode('palette')}
@@ -430,7 +430,7 @@ export default function ColoringPage() {
           </div>
 
           <div className="flex justify-center gap-4 mt-4 mb-4">
-            <button
+            {/* <button
               onClick={() => setTool('brush')}
               className={`p-2 rounded ${
                 tool === 'brush' ? 'bg-blue-100' : 'hover:bg-gray-100'
@@ -438,7 +438,7 @@ export default function ColoringPage() {
               aria-label="ブラシツール"
             >
               <Paintbrush className="w-6 h-6" />
-            </button>
+            </button> */}
             <button
               onClick={() => setTool('fill')}
               className={`p-2 rounded ${
@@ -448,7 +448,7 @@ export default function ColoringPage() {
             >
               <PaintBucket className="w-6 h-6" />
             </button>
-            <button
+            {/* <button
               onClick={() => setTool('eraser')}
               className={`p-2 rounded ${
                 tool === 'eraser' ? 'bg-blue-100' : 'hover:bg-gray-100'
@@ -456,7 +456,7 @@ export default function ColoringPage() {
               aria-label="消しゴムツール"
             >
               <Eraser className="w-6 h-6" />
-            </button>
+            </button> */}
             <button
               onClick={() => setTool('pan')}
               className={`p-2 rounded ${
