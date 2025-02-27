@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Head from 'next/head';
-import { Eraser, Paintbrush, PaintBucket, Undo } from 'lucide-react';
+import { Eraser, Paintbrush, PaintBucket, Undo, Move } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { COLORINGMAP } from '@/public/constants/imagePath';
 import ARCamera from '../components/ARCamera';
 import { DEFAULT_COLORS } from '@/public/constants/colors';
 
-type Tool = 'brush' | 'eraser' | 'fill';
+type Tool = 'brush' | 'eraser' | 'fill' | 'pan';
 
 export default function ColoringPage() {
   const router = useRouter();
@@ -27,6 +27,10 @@ export default function ColoringPage() {
   const [canvasImage, setCanvasImage] = useState<string>('');
   const [colorMode, setColorMode] = useState<'default' | 'palette'>('default');
   const [isZooming, setIsZooming] = useState(false);
+
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const panStartRef = useRef({ x: 0, y: 0 });
+  const lastPanRef = useRef({ x: 0, y: 0 });
 
   // キャンバスの状態を履歴に保存
   const saveState = useCallback(() => {
@@ -156,40 +160,64 @@ export default function ColoringPage() {
     };
   };
 
-  const handlePinchZoomStart = (event: React.TouchEvent) => {
-    if (event.touches.length === 2) {
-      event.preventDefault(); // デフォルトの動作を防止
-      setIsZooming(true);  // ズーム中フラグを設定
-
-      // 2本指のタッチ開始時の距離を計算
-      const dx = event.touches[0].clientX - event.touches[1].clientX;
-      const dy = event.touches[0].clientY - event.touches[1].clientY;
-      lastTouchDistanceRef.current = Math.sqrt(dx * dx + dy * dy);
-
-      // タッチの中心点を計算
-      lastTouchCenterRef.current = {
-        x: (event.touches[0].clientX + event.touches[1].clientX) / 2,
-        y: (event.touches[0].clientY + event.touches[1].clientY) / 2,
+  const handlePanStart = (event: React.TouchEvent) => {
+    // パンモードまたは描画中でない場合のみパン操作を有効にする
+    if (event.touches.length === 1 && (tool === 'pan' || !isDrawing)) {
+      event.preventDefault();
+      panStartRef.current = {
+        x: event.touches[0].clientX - lastPanRef.current.x,
+        y: event.touches[0].clientY - lastPanRef.current.y
       };
     }
   };
 
+  const handlePanMove = (event: React.TouchEvent) => {
+    // パンモードまたは描画中でない場合のみパン操作を有効にする
+    if (event.touches.length === 1 && (tool === 'pan' || !isDrawing)) {
+      event.preventDefault();
+      const newX = event.touches[0].clientX - panStartRef.current.x;
+      const newY = event.touches[0].clientY - panStartRef.current.y;
+      setPan({ x: newX, y: newY });
+      lastPanRef.current = { x: newX, y: newY };
+    }
+  };
+
+  // 既存のhandlePinchZoomStartを修正
+  const handlePinchZoomStart = (event: React.TouchEvent) => {
+    if (event.touches.length === 2) {
+      event.preventDefault();
+      setIsZooming(true);
+
+      const dx = event.touches[0].clientX - event.touches[1].clientX;
+      const dy = event.touches[0].clientY - event.touches[1].clientY;
+      lastTouchDistanceRef.current = Math.sqrt(dx * dx + dy * dy);
+
+      lastTouchCenterRef.current = {
+        x: (event.touches[0].clientX + event.touches[1].clientX) / 2,
+        y: (event.touches[0].clientY + event.touches[1].clientY) / 2,
+      };
+    } else {
+      handlePanStart(event);
+    }
+  };
+
+  // 既存のhandlePinchZoomMoveを修正
   const handlePinchZoomMove = (event: React.TouchEvent) => {
     if (event.touches.length === 2) {
-      event.preventDefault(); // デフォルトの動作を防止
-      setIsZooming(true);  // ズーム中フラグを設定
+      event.preventDefault();
+      setIsZooming(true);
 
-      // 現在の2本指の距離を計算
       const dx = event.touches[0].clientX - event.touches[1].clientX;
       const dy = event.touches[0].clientY - event.touches[1].clientY;
       const touchDistance = Math.sqrt(dx * dx + dy * dy);
 
-      // スケール変更を計算
       const scaleChange = touchDistance / lastTouchDistanceRef.current;
       const newScale = Math.min(Math.max(scale * scaleChange, 0.5), 3);
 
       setScale(newScale);
       lastTouchDistanceRef.current = touchDistance;
+    } else {
+      handlePanMove(event);
     }
   };
 
@@ -200,6 +228,9 @@ export default function ColoringPage() {
   const startDrawing = (event: React.TouchEvent | React.MouseEvent) => {
     // ズーム中は描画を開始しない
     if (isZooming) return;
+    
+    // パンモードの場合は描画しない
+    if (tool === 'pan') return;
 
     event.preventDefault();
     const coords = getCoordinates(event);
@@ -404,6 +435,7 @@ export default function ColoringPage() {
               className={`p-2 rounded ${
                 tool === 'brush' ? 'bg-blue-100' : 'hover:bg-gray-100'
               }`}
+              aria-label="ブラシツール"
             >
               <Paintbrush className="w-6 h-6" />
             </button>
@@ -412,6 +444,7 @@ export default function ColoringPage() {
               className={`p-2 rounded ${
                 tool === 'fill' ? 'bg-blue-100' : 'hover:bg-gray-100'
               }`}
+              aria-label="塗りつぶしツール"
             >
               <PaintBucket className="w-6 h-6" />
             </button>
@@ -420,13 +453,24 @@ export default function ColoringPage() {
               className={`p-2 rounded ${
                 tool === 'eraser' ? 'bg-blue-100' : 'hover:bg-gray-100'
               }`}
+              aria-label="消しゴムツール"
             >
               <Eraser className="w-6 h-6" />
+            </button>
+            <button
+              onClick={() => setTool('pan')}
+              className={`p-2 rounded ${
+                tool === 'pan' ? 'bg-blue-100' : 'hover:bg-gray-100'
+              }`}
+              aria-label="移動ツール"
+            >
+              <Move className="w-6 h-6" />
             </button>
             <button
               onClick={undo}
               className="p-2 rounded hover:bg-gray-100"
               disabled={historyIndex <= 0}
+              aria-label="元に戻す"
             >
               <Undo className="w-6 h-6" />
             </button>
@@ -434,27 +478,35 @@ export default function ColoringPage() {
 
           <div
             ref={canvasWrapperRef}
-            className="relative w-full overflow-hidden"
+            className="relative w-full overflow-hidden max-h-[70vh]"
             onTouchStart={handlePinchZoomStart}
             onTouchMove={handlePinchZoomMove}
             onTouchEnd={handlePinchZoomEnd}
           >
-            <canvas
-              ref={canvasRef}
-              onMouseDown={startDrawing}
-              onMouseMove={draw}
-              onMouseUp={stopDrawing}
-              onMouseOut={stopDrawing}
-              onTouchStart={startDrawing}
-              onTouchMove={draw}
-              onTouchEnd={stopDrawing}
-              className="border border-gray-300 rounded-lg w-full touch-none"
+            <div 
+              className="min-h-[100%] min-w-[100%]"
               style={{
-                transform: `scale(${scale})`,
-                transformOrigin: 'center center',
-                transition: 'transform 0.1s ease-out',
+                transform: `translate(${pan.x}px, ${pan.y}px)`,
+                transition: isZooming ? 'none' : 'transform 0.1s ease-out',
               }}
-            />
+            >
+              <canvas
+                ref={canvasRef}
+                onMouseDown={startDrawing}
+                onMouseMove={draw}
+                onMouseUp={stopDrawing}
+                onMouseOut={stopDrawing}
+                onTouchStart={startDrawing}
+                onTouchMove={draw}
+                onTouchEnd={stopDrawing}
+                className="border border-gray-300 rounded-lg w-full touch-none"
+                style={{
+                  transform: `scale(${scale})`,
+                  transformOrigin: 'center center',
+                  transition: isZooming ? 'none' : 'transform 0.1s ease-out',
+                }}
+              />
+            </div>
           </div>
 
           <button
