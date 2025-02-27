@@ -1,11 +1,11 @@
 export const COLORINGMAP = {
   '1': {
-    path: '/表紙イラスト_初案.png',
-    title: 'PNG表紙イラスト_初案',
+    path: '/表紙イラスト.jpg',
+    title: 'JPG表紙イラスト',
   },
   '2': {
-    path: '/ten-sample.jpg',
-    title: 'JPG実線クッキリ',
+    path: '/ぬりえイラスト_完成.jpg',
+    title: 'JPGぬりえイラスト',
   },
   '3': {
     path: '/PNG背景白あり.png',
