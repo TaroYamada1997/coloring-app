@@ -3,7 +3,7 @@ import Head from 'next/head';
 import { PaintBucket, Undo, Move } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { COLORINGMAP } from '@/public/constants/imagePath';
-import ARCamera from '../components/ARCamera';
+// import ARCamera from '../components/ARCamera';
 import { DEFAULT_COLORS } from '@/public/constants/colors';
 
 type Tool = 'brush' | 'eraser' | 'fill' | 'pan';
@@ -23,8 +23,8 @@ export default function ColoringPage() {
   const lastTouchDistanceRef = useRef(0);
   const lastTouchCenterRef = useRef({ x: 0, y: 0 });
 
-  const [showAR, setShowAR] = useState(false);
-  const [canvasImage, setCanvasImage] = useState<string>('');
+  // const [showAR, setShowAR] = useState(false);
+  // const [canvasImage, setCanvasImage] = useState<string>('');
   const [colorMode, setColorMode] = useState<'default' | 'palette'>('default');
   const [isZooming, setIsZooming] = useState(false);
 
@@ -271,7 +271,7 @@ export default function ColoringPage() {
 
     ctx.lineTo(coords.x, coords.y);
     ctx.strokeStyle = tool === 'eraser' ? '#FFFFFF' : color;
-    ctx.lineWidth = brushSize;
+    // ctx.lineWidth = brushSize;
     ctx.lineCap = 'round';
     ctx.stroke();
   };
@@ -525,7 +525,7 @@ export default function ColoringPage() {
             カメラを起動してARで遊ぶ
           </button> */}
 
-          {showAR && (
+          {/* {showAR && (
             <div className="fixed inset-0 z-50">
               <button
                 onClick={() => setShowAR(false)}
@@ -535,7 +535,7 @@ export default function ColoringPage() {
               </button>
               <ARCamera canvasImage={canvasImage} />
             </div>
-          )}
+          )} */}
         </div>
       </div>
     </div>
