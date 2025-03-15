@@ -4,7 +4,7 @@ export const COLORINGMAP = {
     title: 'JPG表紙イラスト',
   },
   '2': {
-    path: '/ぬりえイラスト_完成.jpg',
+    path: '/ぬりえイラスト_背景透過_完成.jpg',
     title: 'JPGぬりえイラスト',
   },
   '3': {
