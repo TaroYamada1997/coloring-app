@@ -12,12 +12,12 @@ export default function ColoringPage() {
   const router = useRouter();
   const { id } = router.query;
   const [color, setColor] = useState('#000000');
-  const [brushSize, setBrushSize] = useState(5);
+  // const [brushSize, setBrushSize] = useState(5);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [tool, setTool] = useState<Tool>('brush');
+  const [tool, setTool] = useState<Tool>('fill');
   const [history, setHistory] = useState<ImageData[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
-  const [scale, setScale] = useState(1);
+  const [scale, setScale] = useState(1.7);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const lastTouchDistanceRef = useRef(0);
@@ -329,15 +329,15 @@ export default function ColoringPage() {
     };
   }, [id]);
 
-  const handleARClick = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  // const handleARClick = () => {
+  //   const canvas = canvasRef.current;
+  //   if (!canvas) return;
 
-    // キャンバスの現在の状態を画像として取得
-    const image = canvas.toDataURL('image/png');
-    setCanvasImage(image);
-    setShowAR(true);
-  };
+  //   // キャンバスの現在の状態を画像として取得
+  //   const image = canvas.toDataURL('image/png');
+  //   setCanvasImage(image);
+  //   setShowAR(true);
+  // };
 
   return (
     <div className="min-h-screen bg-gray-100 py-4">
@@ -418,7 +418,7 @@ export default function ColoringPage() {
             )}
           </div>
 
-          <div className="flex items-center gap-4">
+          {/* <div className="flex items-center gap-4">
             <div>
               <input
                 type="range"
@@ -430,7 +430,7 @@ export default function ColoringPage() {
                 title="ブラシサイズ"
               />
             </div>
-          </div>
+          </div> */}
 
           <div className="flex justify-center gap-4 mt-4 mb-4">
             {/* <button
@@ -518,12 +518,12 @@ export default function ColoringPage() {
           >
             保存する
           </button>
-          <button
+          {/* <button
             onClick={handleARClick}
             className="mt-4 w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
           >
             カメラを起動してARで遊ぶ
-          </button>
+          </button> */}
 
           {showAR && (
             <div className="fixed inset-0 z-50">
