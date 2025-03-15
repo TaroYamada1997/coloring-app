@@ -241,14 +241,17 @@ export default function ColoringPage() {
       return;
     }
 
-    setIsDrawing(true);
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    // ブラシまたは消しゴムモードの場合のみ描画を開始
+    if (tool === 'brush' || tool === 'eraser') {
+      setIsDrawing(true);
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
 
-    ctx.beginPath();
-    ctx.moveTo(coords.x, coords.y);
+      ctx.beginPath();
+      ctx.moveTo(coords.x, coords.y);
+    }
   };
 
   const draw = (event: React.TouchEvent | React.MouseEvent) => {
