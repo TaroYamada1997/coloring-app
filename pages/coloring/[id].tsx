@@ -1,18 +1,38 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Head from 'next/head';
-import { PaintBucket, Undo, Move } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RotateCcw, Download, AlertCircle, Palette } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { COLORINGMAP } from '@/public/constants/imagePath';
+import GuideDialog from '@/components/GuideDialog';
 // import ARCamera from '../components/ARCamera';
-import { DEFAULT_COLORS } from '@/public/constants/colors';
+// import { DEFAULT_COLORS } from '@/public/constants/colors';
 
 type Tool = 'brush' | 'eraser' | 'fill' | 'pan';
+
+// カラーパレットのカテゴリーとカラーを定義
+const COLOR_CATEGORIES = {
+  spring: {
+    name: 'Spring',
+    colors: ['#FFB6C1', '#FFC0CB', '#FF69B4', '#FF1493', '#DB7093', '#C71585', '#FFA07A', '#FF7F50']
+  },
+  summer: {
+    name: 'Summer',
+    colors: ['#FF5733', '#33FFF5', '#33FF57', '#F5FF33', '#FF33F5', '#33F5FF', '#5733FF', '#FF3357']
+  },
+  autumn: {
+    name: 'Autumn',
+    colors: ['#8B4513', '#CD853F', '#D2691E', '#B8860B', '#DAA520', '#F4A460', '#A0522D', '#BC8F8F']
+  },
+  winter: {
+    name: 'Winter',
+    colors: ['#1E90FF', '#4682B4', '#87CEEB', '#B0C4DE', '#708090', '#778899', '#F0F8FF', '#E6E6FA']
+  },
+};
 
 export default function ColoringPage() {
   const router = useRouter();
   const { id } = router.query;
-  const [color, setColor] = useState('#000000');
-  // const [brushSize, setBrushSize] = useState(5);
+  const [color, setColor] = useState('#FF5733');
   const [isDrawing, setIsDrawing] = useState(false);
   const [tool, setTool] = useState<Tool>('fill');
   const [history, setHistory] = useState<ImageData[]>([]);
@@ -22,15 +42,16 @@ export default function ColoringPage() {
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const lastTouchDistanceRef = useRef(0);
   const lastTouchCenterRef = useRef({ x: 0, y: 0 });
-
   // const [showAR, setShowAR] = useState(false);
   // const [canvasImage, setCanvasImage] = useState<string>('');
-  const [colorMode, setColorMode] = useState<'default' | 'palette'>('default');
   const [isZooming, setIsZooming] = useState(false);
 
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const panStartRef = useRef({ x: 0, y: 0 });
   const lastPanRef = useRef({ x: 0, y: 0 });
+  const [showColorPopup, setShowColorPopup] = useState(false);
+  const [currentCategory, setCurrentCategory] = useState<keyof typeof COLOR_CATEGORIES>('spring');
+  const [showGuideDialog, setShowGuideDialog] = useState(false);
 
   // キャンバスの状態を履歴に保存
   const saveState = useCallback(() => {
@@ -57,6 +78,12 @@ export default function ColoringPage() {
     ctx.putImageData(previousState, 0, 0);
     setHistoryIndex((prev) => prev - 1);
   }, [history, historyIndex]);
+
+  // タッチイベント用のやり直し関数
+  const handleUndoTouch = (e: React.TouchEvent) => {
+    e.preventDefault(); // デフォルトのタッチイベントを防止
+    undo();
+  };
 
   // 塗りつぶし機能
   const floodFill = useCallback(
@@ -373,215 +400,177 @@ export default function ColoringPage() {
     };
   }, [id]);
 
-  // const handleARClick = () => {
-  //   const canvas = canvasRef.current;
-  //   if (!canvas) return;
-
-  //   // キャンバスの現在の状態を画像として取得
-  //   const image = canvas.toDataURL('image/png');
-  //   setCanvasImage(image);
-  //   setShowAR(true);
-  // };
-
   return (
-    <div className="min-h-screen bg-gray-100 py-4">
+    <div className="min-h-screen bg-gray-100">
       <Head>
-        {id && (
-          <div>
-            <title>{COLORINGMAP[id as keyof typeof COLORINGMAP].title}</title>
-            <meta
-              name="description"
-              content={`${COLORINGMAP[id as keyof typeof COLORINGMAP].title}のぬりえページ`}
-            />
-            <meta
-              name="viewport"
-              content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
-            />
-          </div>
-        )}
+        <title>塗り絵 - {id}</title>
+        <meta name="description" content="オリジナルの塗り絵を楽しもう" />
       </Head>
 
-      <div className="max-w-xl mx-auto px-4">
-        {/* <h1 className="text-2xl font-bold mb-4">{imageData.title}</h1> */}
-
-        <div className="bg-white rounded-lg shadow-lg p-4">
-          {/* カラーモード切り替えボタン */}
-          <div className="flex justify-center gap-4 mb-4">
-            <button
-              onClick={() => setColorMode('default')}
-              className={`px-4 py-2 rounded-lg ${
-                colorMode === 'default'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 hover:bg-gray-300'
-              }`}
-            >
-              春色パレット
+      <div className="max-w-md mx-auto bg-white min-h-screen relative">
+        {/* ヘッダーツールバー */}
+        <div className="flex justify-between items-center p-3">
+          <div className="flex space-x-2">
+            <button className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+              <ChevronLeft className="w-6 h-6 text-gray-600" />
             </button>
-            <button
-              onClick={() => setColorMode('palette')}
-              className={`px-4 py-2 rounded-lg ${
-                colorMode === 'palette'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 hover:bg-gray-300'
+            <button className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+              <ChevronRight className="w-6 h-6 text-gray-600" />
+            </button>
+            <button 
+              onClick={undo}
+              onTouchStart={handleUndoTouch}
+              disabled={historyIndex <= 0}
+              className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                historyIndex <= 0 ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 active:bg-gray-400'
               }`}
             >
-              カラーパレット
+              <RotateCcw className={`w-6 h-6 ${historyIndex <= 0 ? 'text-gray-400' : 'text-gray-600'}`} />
             </button>
           </div>
+          <div className="flex flex-col space-y-2">
+            <button 
+              onClick={() => setShowGuideDialog(true)}
+              className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center"
+            >
+              <AlertCircle className="w-6 h-6 text-gray-600" />
+            </button>
+            <button 
+              onClick={saveImage}
+              className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center"
+            >
+              <Download className="w-6 h-6 text-gray-600" />
+            </button>
+          </div>
+        </div>
 
-          {/* カラー選択部分 */}
-          <div className="mb-4">
-            {colorMode === 'default' ? (
-              // デフォルトカラー
-              <div className="flex justify-center gap-2">
-                {DEFAULT_COLORS.map((colorOption) => (
+        {/* キャンバス部分 */}
+        <div
+          ref={canvasWrapperRef}
+          className="relative w-full overflow-hidden h-[calc(80vh-180px)]"
+          onTouchStart={handlePinchZoomStart}
+          onTouchMove={handlePinchZoomMove}
+          onTouchEnd={handlePinchZoomEnd}
+        >
+          <div 
+            className="min-w-[100%]"
+            style={{
+              transform: `translate(${pan.x}px, ${pan.y}px)`,
+              transition: isZooming ? 'none' : 'transform 0.1s ease-out',
+            }}
+          >
+            <canvas
+              ref={canvasRef}
+              onMouseDown={startDrawing}
+              onMouseMove={draw}
+              onMouseUp={stopDrawing}
+              onMouseOut={stopDrawing}
+              onTouchStart={startDrawing}
+              onTouchMove={draw}
+              onTouchEnd={stopDrawing}
+              className="w-full touch-none"
+              style={{
+                transform: `scale(${scale})`,
+                transformOrigin: 'center center',
+                transition: isZooming ? 'none' : 'transform 0.1s ease-out',
+              }}
+            />
+          </div>
+        </div>
+        
+        {/* カラーパレット */}
+        <div className="flex justify-center p-3 border-t">
+          <button
+            onClick={() => setShowColorPopup(true)}
+            className="w-10 h-10 rounded-full mx-1 flex items-center justify-center bg-gray-200"
+            aria-label="カラーパレットを開く"
+          >
+            <Palette className="w-6 h-6" />
+          </button>
+          
+          {COLOR_CATEGORIES[currentCategory].colors.slice(0, 5).map((colorOption) => (
+            <button
+              key={colorOption}
+              onClick={() => setColor(colorOption)}
+              className={`w-10 h-10 rounded-full mx-1 transition-transform ${
+                color === colorOption ? 'scale-110 ring-2 ring-gray-400' : ''
+              }`}
+              style={{ 
+                backgroundColor: colorOption,
+                border: colorOption === '#FFFFFF' ? '1px solid #ddd' : 'none'
+              }}
+              aria-label={`色を${colorOption}に変更`}
+            />
+          ))}
+        </div>
+        
+        {/* カラーポップアップ */}
+        {showColorPopup && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end justify-center">
+            <div 
+              className="bg-white w-full max-w-md rounded-t-xl p-5 transform transition-transform duration-300 ease-out animate-slide-up"
+              style={{ height: '60vh' }}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium">カラーパレット</h3>
+                <button 
+                  onClick={() => setShowColorPopup(false)}
+                  className="p-2 rounded-full hover:bg-gray-100"
+                >
+                  <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+              
+              {/* カテゴリータブ */}
+              <div className="flex overflow-x-auto mb-4 pb-1 -mx-1">
+                {Object.entries(COLOR_CATEGORIES).map(([key, category]) => (
+                  <button
+                    key={key}
+                    onClick={() => setCurrentCategory(key as keyof typeof COLOR_CATEGORIES)}
+                    className={`px-4 py-2 mx-1 rounded-full text-sm whitespace-nowrap transition-colors ${
+                      currentCategory === key 
+                        ? 'bg-blue-500 text-white' 
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    {category.name}
+                  </button>
+                ))}
+              </div>
+              
+              <div className="grid grid-cols-5 gap-4 mt-6 overflow-y-auto" style={{ maxHeight: 'calc(60vh - 120px)' }}>
+                {COLOR_CATEGORIES[currentCategory].colors.map((colorOption) => (
                   <button
                     key={colorOption}
-                    onClick={() => setColor(colorOption)}
-                    className={`w-10 h-10 rounded-full border-2 transition-transform ${
-                      color === colorOption
-                        ? 'border-gray-600 scale-110'
-                        : 'border-gray-200'
+                    onClick={() => {
+                      setColor(colorOption);
+                      setShowColorPopup(false);
+                    }}
+                    className={`w-14 h-14 rounded-full mx-auto transition-transform ${
+                      color === colorOption ? 'scale-110 ring-2 ring-gray-400' : ''
                     }`}
-                    style={{ backgroundColor: colorOption }}
+                    style={{ 
+                      backgroundColor: colorOption,
+                      border: colorOption === '#FFFFFF' ? '1px solid #ddd' : 'none'
+                    }}
                     aria-label={`色を${colorOption}に変更`}
                   />
                 ))}
               </div>
-            ) : (
-              // カラーパレット
-              <div className="flex justify-center">
-                <input
-                  type="color"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="w-20 h-20"
-                  title="カラーパレット"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* <div className="flex items-center gap-4">
-            <div>
-              <input
-                type="range"
-                min="1"
-                max="20"
-                value={brushSize}
-                onChange={(e) => setBrushSize(Number(e.target.value))}
-                className="w-32"
-                title="ブラシサイズ"
-              />
-            </div>
-          </div> */}
-
-          <div className="flex justify-center gap-4 mt-4 mb-4">
-            {/* <button
-              onClick={() => setTool('brush')}
-              className={`p-2 rounded ${
-                tool === 'brush' ? 'bg-blue-100' : 'hover:bg-gray-100'
-              }`}
-              aria-label="ブラシツール"
-            >
-              <Paintbrush className="w-6 h-6" />
-            </button> */}
-            <button
-              onClick={() => setTool('fill')}
-              className={`p-2 rounded ${
-                tool === 'fill' ? 'bg-blue-100' : 'hover:bg-gray-100'
-              }`}
-              aria-label="塗りつぶしツール"
-            >
-              <PaintBucket className="w-6 h-6" />
-            </button>
-            {/* <button
-              onClick={() => setTool('eraser')}
-              className={`p-2 rounded ${
-                tool === 'eraser' ? 'bg-blue-100' : 'hover:bg-gray-100'
-              }`}
-              aria-label="消しゴムツール"
-            >
-              <Eraser className="w-6 h-6" />
-            </button> */}
-            <button
-              onClick={() => setTool('pan')}
-              className={`p-2 rounded ${
-                tool === 'pan' ? 'bg-blue-100' : 'hover:bg-gray-100'
-              }`}
-              aria-label="移動ツール"
-            >
-              <Move className="w-6 h-6" />
-            </button>
-            <button
-              onClick={undo}
-              className="p-2 rounded hover:bg-gray-100"
-              disabled={historyIndex <= 0}
-              aria-label="元に戻す"
-            >
-              <Undo className="w-6 h-6" />
-            </button>
-          </div>
-
-          <div
-            ref={canvasWrapperRef}
-            className="relative w-full overflow-hidden max-h-[70vh]"
-            onTouchStart={handlePinchZoomStart}
-            onTouchMove={handlePinchZoomMove}
-            onTouchEnd={handlePinchZoomEnd}
-          >
-            <div 
-              className="min-h-[100%] min-w-[100%]"
-              style={{
-                transform: `translate(${pan.x}px, ${pan.y}px)`,
-                transition: isZooming ? 'none' : 'transform 0.1s ease-out',
-              }}
-            >
-              <canvas
-                ref={canvasRef}
-                onMouseDown={startDrawing}
-                onMouseMove={draw}
-                onMouseUp={stopDrawing}
-                onMouseOut={stopDrawing}
-                onTouchStart={startDrawing}
-                onTouchMove={draw}
-                onTouchEnd={stopDrawing}
-                className="border border-gray-300 rounded-lg w-full touch-none"
-                style={{
-                  transform: `scale(${scale})`,
-                  transformOrigin: 'center center',
-                  transition: isZooming ? 'none' : 'transform 0.1s ease-out',
-                }}
-              />
             </div>
           </div>
-
-          <button
-            onClick={saveImage}
-            className="mt-4 w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            保存する
-          </button>
-          {/* <button
-            onClick={handleARClick}
-            className="mt-4 w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
-          >
-            カメラを起動してARで遊ぶ
-          </button> */}
-
-          {/* {showAR && (
-            <div className="fixed inset-0 z-50">
-              <button
-                onClick={() => setShowAR(false)}
-                className="absolute top-4 right-4 z-[1001] bg-white p-2 rounded-full shadow-lg"
-              >
-                閉じる
-              </button>
-              <ARCamera canvasImage={canvasImage} />
-            </div>
-          )} */}
-        </div>
+        )}
+        
+        {/* ガイドダイアログ */}
+        <GuideDialog 
+          isOpen={showGuideDialog} 
+          onClose={() => setShowGuideDialog(false)} 
+        />
       </div>
     </div>
   );
 }
+
