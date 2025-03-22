@@ -283,14 +283,58 @@ export default function ColoringPage() {
     setIsDrawing(false);
   };
 
-  const saveImage = () => {
+  const saveImage = async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const dataUrl = canvas.toDataURL('image/png');
-    const link = document.createElement('a');
-    link.download = 'colored-image.png';
-    link.href = dataUrl;
-    link.click();
+    
+    // モバイルデバイスかどうかを判定
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    
+    if (isIOS && navigator.share) {
+      // iOS向けの処理（Web Share API使用）
+      try {
+        // キャンバスをBlobに変換
+        canvas.toBlob(async (blob) => {
+          if (!blob) {
+            throw new Error('Blob creation failed');
+          }
+          
+          const file = new File([blob], `colored-image-${id}.png`, { type: 'image/png' });
+          
+          // Web Share APIを使用して共有
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: '塗り絵の保存',
+              text: '写真に保存するには「写真に追加」を選択してください'
+            });
+          } else {
+            // ファイル共有に対応していない場合は代替方法
+            const dataUrl = canvas.toDataURL('image/png');
+            window.open(dataUrl, '_blank');
+            setTimeout(() => {
+              alert('画像を長押しして「写真に保存」を選択してください。');
+            }, 500);
+          }
+        }, 'image/png');
+      } catch (error) {
+        console.error('共有に失敗しました:', error);
+        
+        // 失敗した場合は代替方法を提案
+        const dataUrl = canvas.toDataURL('image/png');
+        window.open(dataUrl, '_blank');
+        setTimeout(() => {
+          alert('画像を長押しして「写真に保存」を選択してください。');
+        }, 500);
+      }
+    } else {
+      // その他のデバイス向け処理
+      const dataUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = `colored-image-${id}.png`;
+      link.href = dataUrl;
+      link.click();
+    }
   };
 
   // 初期画像の読み込み時に最初の状態を保存
