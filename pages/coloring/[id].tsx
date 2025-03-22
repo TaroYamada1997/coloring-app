@@ -4,8 +4,6 @@ import { ChevronLeft, ChevronRight, RotateCcw, Download, AlertCircle, Palette } 
 import { useRouter } from 'next/router';
 import { COLORINGMAP } from '@/public/constants/imagePath';
 import GuideDialog from '@/components/GuideDialog';
-// import ARCamera from '../components/ARCamera';
-// import { DEFAULT_COLORS } from '@/public/constants/colors';
 
 type Tool = 'brush' | 'eraser' | 'fill' | 'pan';
 
@@ -34,7 +32,7 @@ export default function ColoringPage() {
   const { id } = router.query;
   const [color, setColor] = useState('#FF5733');
   const [isDrawing, setIsDrawing] = useState(false);
-  const [tool, setTool] = useState<Tool>('fill');
+  const [tool] = useState<Tool>('fill');
   const [history, setHistory] = useState<ImageData[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [scale, setScale] = useState(1.7);
