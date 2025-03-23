@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, RotateCcw, Download, AlertCircle, Palette } 
 import { useRouter } from 'next/router';
 import { COLORINGMAP } from '@/public/constants/imagePath';
 import GuideDialog from '@/components/GuideDialog';
+import SplashScreen from '@/components/SplashScreen';
 
 type Tool = 'brush' | 'eraser' | 'fill' | 'pan';
 
@@ -50,6 +51,7 @@ export default function ColoringPage() {
   const [showColorPopup, setShowColorPopup] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<keyof typeof COLOR_CATEGORIES>('spring');
   const [showGuideDialog, setShowGuideDialog] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
 
   // キャンバスの状態を履歴に保存
   const saveState = useCallback(() => {
@@ -404,6 +406,14 @@ export default function ColoringPage() {
         <title>塗り絵 - {id}</title>
         <meta name="description" content="オリジナルの塗り絵を楽しもう" />
       </Head>
+
+      {/* スプラッシュ画面 */}
+      {showSplash && (
+        <SplashScreen 
+          logoPath="/Origina-logo_tate.png" 
+          onComplete={() => setShowSplash(false)} 
+        />
+      )}
 
       <div className="max-w-md mx-auto bg-white min-h-screen relative">
         {/* ヘッダーツールバー */}
