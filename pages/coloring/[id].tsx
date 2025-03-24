@@ -570,7 +570,7 @@ export default function ColoringPage() {
                       setColor(colorOption);
                       setShowColorPopup(false);
                     }}
-                    className={`w-14 h-14 rounded-full mx-auto transition-transform mt-2 ${
+                    className={`w-14 h-14 rounded-full mx-auto transition-transform mt-2 mb-2 ${
                       color === colorOption ? 'scale-110 ring-2 ring-gray-400' : ''
                     }`}
                     style={{ 
