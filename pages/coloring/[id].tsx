@@ -44,6 +44,7 @@ export default function ColoringPage() {
   // const [showAR, setShowAR] = useState(false);
   // const [canvasImage, setCanvasImage] = useState<string>('');
   const [isZooming, setIsZooming] = useState(false);
+  const [isPanning, setIsPanning] = useState(false);
 
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const panStartRef = useRef({ x: 0, y: 0 });
@@ -191,6 +192,7 @@ export default function ColoringPage() {
     // パンモードまたは描画中でない場合のみパン操作を有効にする
     if (event.touches.length === 1 && (tool === 'pan' || !isDrawing)) {
       event.preventDefault();
+      setIsPanning(true);
       panStartRef.current = {
         x: event.touches[0].clientX - lastPanRef.current.x,
         y: event.touches[0].clientY - lastPanRef.current.y
@@ -200,12 +202,16 @@ export default function ColoringPage() {
 
   const handlePanMove = (event: React.TouchEvent) => {
     // パンモードまたは描画中でない場合のみパン操作を有効にする
-    if (event.touches.length === 1 && (tool === 'pan' || !isDrawing)) {
+    if (event.touches.length === 1 && (tool === 'pan' || !isDrawing) && isPanning) {
       event.preventDefault();
       const newX = event.touches[0].clientX - panStartRef.current.x;
       const newY = event.touches[0].clientY - panStartRef.current.y;
-      setPan({ x: newX, y: newY });
-      lastPanRef.current = { x: newX, y: newY };
+      
+      // requestAnimationFrameを使用してスムーズな更新
+      requestAnimationFrame(() => {
+        setPan({ x: newX, y: newY });
+        lastPanRef.current = { x: newX, y: newY };
+      });
     }
   };
 
@@ -230,9 +236,8 @@ export default function ColoringPage() {
 
   // 既存のhandlePinchZoomMoveを修正
   const handlePinchZoomMove = (event: React.TouchEvent) => {
-    if (event.touches.length === 2) {
+    if (event.touches.length === 2 && isZooming) {
       event.preventDefault();
-      setIsZooming(true);
 
       const dx = event.touches[0].clientX - event.touches[1].clientX;
       const dy = event.touches[0].clientY - event.touches[1].clientY;
@@ -241,15 +246,19 @@ export default function ColoringPage() {
       const scaleChange = touchDistance / lastTouchDistanceRef.current;
       const newScale = Math.min(Math.max(scale * scaleChange, 0.5), 3);
 
-      setScale(newScale);
-      lastTouchDistanceRef.current = touchDistance;
+      // requestAnimationFrameを使用してスムーズな更新
+      requestAnimationFrame(() => {
+        setScale(newScale);
+        lastTouchDistanceRef.current = touchDistance;
+      });
     } else {
       handlePanMove(event);
     }
   };
 
   const handlePinchZoomEnd = () => {
-    setIsZooming(false);  // ズーム中フラグを解除
+    setIsZooming(false);
+    setIsPanning(false);
   };
 
   const startDrawing = (event: React.TouchEvent | React.MouseEvent) => {
@@ -459,12 +468,14 @@ export default function ColoringPage() {
           onTouchStart={handlePinchZoomStart}
           onTouchMove={handlePinchZoomMove}
           onTouchEnd={handlePinchZoomEnd}
+          onTouchCancel={handlePinchZoomEnd}
         >
           <div 
             className="min-w-[100%]"
             style={{
               transform: `translate(${pan.x}px, ${pan.y}px)`,
-              transition: isZooming ? 'none' : 'transform 0.1s ease-out',
+              transition: isPanning || isZooming ? 'none' : 'transform 0.1s ease-out',
+              willChange: 'transform'
             }}
           >
             <canvas
@@ -481,6 +492,8 @@ export default function ColoringPage() {
                 transform: `scale(${scale})`,
                 transformOrigin: 'center center',
                 transition: isZooming ? 'none' : 'transform 0.1s ease-out',
+                willChange: 'transform',
+                imageRendering: 'pixelated'
               }}
             />
           </div>
