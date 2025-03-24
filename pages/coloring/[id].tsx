@@ -12,19 +12,19 @@ type Tool = 'brush' | 'eraser' | 'fill' | 'pan';
 const COLOR_CATEGORIES = {
   spring: {
     name: 'Spring',
-    colors: ['#FFB6C1', '#FFC0CB', '#FF69B4', '#FF1493', '#DB7093', '#C71585', '#FFA07A', '#FF7F50']
+    colors: ['#FFB6C1', '#FFC0CB', '#FF69B4', '#FF1493', '#DB7093']
   },
   summer: {
     name: 'Summer',
-    colors: ['#FF5733', '#33FFF5', '#33FF57', '#F5FF33', '#FF33F5', '#33F5FF', '#5733FF', '#FF3357']
+    colors: ['#FF5733', '#33FFF5', '#33FF57', '#F5FF33', '#FF33F5']
   },
   autumn: {
     name: 'Autumn',
-    colors: ['#8B4513', '#CD853F', '#D2691E', '#B8860B', '#DAA520', '#F4A460', '#A0522D', '#BC8F8F']
+    colors: ['#8B4513', '#CD853F', '#D2691E', '#B8860B', '#DAA520']
   },
   winter: {
     name: 'Winter',
-    colors: ['#1E90FF', '#4682B4', '#87CEEB', '#B0C4DE', '#708090', '#778899', '#F0F8FF', '#E6E6FA']
+    colors: ['#1E90FF', '#4682B4', '#87CEEB', '#B0C4DE', '#708090']
   },
 };
 
