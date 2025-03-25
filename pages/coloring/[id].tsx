@@ -80,10 +80,52 @@ export default function ColoringPage() {
     setHistoryIndex((prev) => prev - 1);
   }, [history, historyIndex]);
 
-  // タッチイベント用のやり直し関数
+  // やり直し機能
+  const redo = useCallback(() => {
+    if (historyIndex >= history.length - 1) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const nextState = history[historyIndex + 1];
+    ctx.putImageData(nextState, 0, 0);
+    setHistoryIndex((prev) => prev + 1);
+  }, [history, historyIndex]);
+
+  // 最初からやり直す機能
+  const reset = useCallback(() => {
+    if (history.length === 0 || historyIndex < 0) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // 履歴の最初の状態（初期状態）を取得
+    const initialState = history[0];
+    ctx.putImageData(initialState, 0, 0);
+    setHistoryIndex(0);
+  }, [history, historyIndex]);
+
+  // タッチイベント用のハンドラー
   const handleUndoTouch = (e: React.TouchEvent) => {
-    e.preventDefault(); // デフォルトのタッチイベントを防止
+    e.preventDefault();
     undo();
+  };
+
+  const handleRedoTouch = (e: React.TouchEvent) => {
+    e.preventDefault();
+    redo();
+  };
+
+  const handleResetTouch = (e: React.TouchEvent) => {
+    e.preventDefault();
+    // 確認ダイアログを表示
+    if (window.confirm('塗り絵を最初の状態に戻しますか？')) {
+      reset();
+    }
   };
 
   // 塗りつぶし機能
@@ -428,12 +470,6 @@ export default function ColoringPage() {
         {/* ヘッダーツールバー */}
         <div className="flex justify-between items-center p-3">
           <div className="flex space-x-2">
-            <button className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-              <ChevronLeft className="w-6 h-6 text-gray-600" />
-            </button>
-            <button className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-              <ChevronRight className="w-6 h-6 text-gray-600" />
-            </button>
             <button 
               onClick={undo}
               onTouchStart={handleUndoTouch}
@@ -442,7 +478,31 @@ export default function ColoringPage() {
                 historyIndex <= 0 ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 active:bg-gray-400'
               }`}
             >
-              <RotateCcw className={`w-6 h-6 ${historyIndex <= 0 ? 'text-gray-400' : 'text-gray-600'}`} />
+              <ChevronLeft className={`w-6 h-6 ${historyIndex <= 0 ? 'text-gray-400' : 'text-gray-600'}`} />
+            </button>
+            <button 
+              onClick={redo}
+              onTouchStart={handleRedoTouch}
+              disabled={historyIndex >= history.length - 1}
+              className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                historyIndex >= history.length - 1 ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 active:bg-gray-400'
+              }`}
+            >
+              <ChevronRight className={`w-6 h-6 ${historyIndex >= history.length - 1 ? 'text-gray-400' : 'text-gray-600'}`} />
+            </button>
+            <button 
+              onClick={() => {
+                if (window.confirm('塗り絵を最初の状態に戻しますか？')) {
+                  reset();
+                }
+              }}
+              onTouchStart={handleResetTouch}
+              disabled={historyIndex === 0}
+              className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                historyIndex === 0 ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 active:bg-gray-400'
+              }`}
+            >
+              <RotateCcw className={`w-6 h-6 ${historyIndex === 0 ? 'text-gray-400' : 'text-gray-600'}`} />
             </button>
           </div>
           <div className="flex flex-col space-y-2">
