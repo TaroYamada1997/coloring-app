@@ -412,7 +412,7 @@ export default function ColoringPage() {
   return (
     <div className="min-h-screen bg-gray-100">
       <Head>
-        <title>塗り絵 - {id}</title>
+        <title>Origina ぬりえ</title>
         <meta name="description" content="オリジナルの塗り絵を楽しもう" />
       </Head>
 
