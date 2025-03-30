@@ -418,36 +418,57 @@ export default function ColoringPage() {
   // 初期画像の読み込み時に最初の状態を保存
   useEffect(() => {
     if (!id || typeof id !== 'string') return;
-
-    const coloringInfo = COLORINGMAP[id as keyof typeof COLORINGMAP];
-    if (!coloringInfo) return;
-
+    
     const canvas = canvasRef.current;
     if (!canvas) return;
+    
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
+    
     const img = new Image();
-    img.src = coloringInfo.path;
-
+    img.crossOrigin = 'anonymous';
+    img.src = COLORINGMAP[id as keyof typeof COLORINGMAP]?.path || '';
+    
     img.onload = () => {
-      // 元の画像サイズを維持したまま描画
-      canvas.width = img.width;
-      canvas.height = img.height;
-
-      // アンチエイリアスを無効化
-      ctx.imageSmoothingEnabled = false;
-
+      // iPhone SEの画面サイズに合わせる
+      const maxWidth = 375; // iPhone SEの幅
+      const maxHeight = 450; // 画面の高さから他の要素の高さを引いた値
+      
+      // 画像のアスペクト比を維持しながらサイズを調整
+      let width = img.width;
+      let height = img.height;
+      
+      if (width > maxWidth) {
+        const ratio = maxWidth / width;
+        width = maxWidth;
+        height = height * ratio;
+      }
+      
+      if (height > maxHeight) {
+        const ratio = maxHeight / height;
+        height = maxHeight;
+        width = width * ratio;
+      }
+      
+      // キャンバスのサイズを設定
+      canvas.width = width;
+      canvas.height = height;
+      
       // 画像を描画
-      ctx.drawImage(img, 0, 0);
-
-      // スタイルでサイズを調整（実際のピクセルはそのまま）
-      canvas.style.width = '100%';
-      canvas.style.height = 'auto';
-
-      const initialState = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      setHistory([initialState]);
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      // 初期状態を履歴に保存
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      setHistory([imageData]);
       setHistoryIndex(0);
+      
+      // 初期スケールを調整（画面に合わせる）
+      const canvasWrapper = canvasWrapperRef.current;
+      if (canvasWrapper) {
+        const wrapperWidth = canvasWrapper.clientWidth;
+        const initialScale = Math.min(1, wrapperWidth / width * 0.9);
+        setScale(initialScale);
+      }
     };
   }, [id]);
 
@@ -524,14 +545,14 @@ export default function ColoringPage() {
         {/* キャンバス部分 */}
         <div
           ref={canvasWrapperRef}
-          className="relative w-full overflow-hidden h-[calc(80vh-180px)]"
+          className="relative w-full overflow-hidden h-[calc(70vh-120px)]"
           onTouchStart={handlePinchZoomStart}
           onTouchMove={handlePinchZoomMove}
           onTouchEnd={handlePinchZoomEnd}
           onTouchCancel={handlePinchZoomEnd}
         >
           <div 
-            className="min-w-[100%]"
+            className="min-w-[100%] flex justify-center items-center h-full"
             style={{
               transform: `translate(${pan.x}px, ${pan.y}px)`,
               transition: isPanning || isZooming ? 'none' : 'transform 0.1s ease-out',
@@ -547,13 +568,15 @@ export default function ColoringPage() {
               onTouchStart={startDrawing}
               onTouchMove={draw}
               onTouchEnd={stopDrawing}
-              className="w-full touch-none"
+              className="touch-none"
               style={{
                 transform: `scale(${scale})`,
                 transformOrigin: 'center center',
                 transition: isZooming ? 'none' : 'transform 0.1s ease-out',
                 willChange: 'transform',
-                imageRendering: 'pixelated'
+                imageRendering: 'pixelated',
+                maxWidth: '100%',
+                height: 'auto'
               }}
             />
           </div>
