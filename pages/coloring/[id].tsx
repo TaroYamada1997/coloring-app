@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Head from 'next/head';
-import { ChevronLeft, ChevronRight, RotateCcw, Download, AlertCircle, Palette } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RotateCcw, Download, AlertCircle, Palette, X } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { COLORINGMAP } from '@/public/constants/imagePath';
 import GuideDialog from '@/components/GuideDialog';
 import SplashScreen from '@/components/SplashScreen';
+import ColorPicker from '@/components/ColorPicker';
 
 type Tool = 'brush' | 'eraser' | 'fill' | 'pan';
 
@@ -41,8 +42,6 @@ export default function ColoringPage() {
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const lastTouchDistanceRef = useRef(0);
   const lastTouchCenterRef = useRef({ x: 0, y: 0 });
-  // const [showAR, setShowAR] = useState(false);
-  // const [canvasImage, setCanvasImage] = useState<string>('');
   const [isZooming, setIsZooming] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
 
@@ -50,9 +49,10 @@ export default function ColoringPage() {
   const panStartRef = useRef({ x: 0, y: 0 });
   const lastPanRef = useRef({ x: 0, y: 0 });
   const [showColorPopup, setShowColorPopup] = useState(false);
-  const [currentCategory, setCurrentCategory] = useState<keyof typeof COLOR_CATEGORIES>('spring');
   const [showGuideDialog, setShowGuideDialog] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [colors, setColors] = useState<string[]>(COLOR_CATEGORIES.spring.colors);
 
   // キャンバスの状態を履歴に保存
   const saveState = useCallback(() => {
@@ -551,10 +551,32 @@ export default function ColoringPage() {
     };
   }, [id]);
 
+  // カラーパレットダイアログを表示
+  const handleOpenColorPalette = () => {
+    setShowColorPopup(true);
+  };
+
+  // カテゴリーを選択したときの処理
+  const handleSelectCategory = (categoryKey: keyof typeof COLOR_CATEGORIES) => {
+    setColors(COLOR_CATEGORIES[categoryKey].colors);
+    setShowColorPopup(false);
+  };
+
+  // オリジナルカラーピッカーを選択したときの処理
+  const handleSelectOriginal = () => {
+    setShowColorPopup(false);
+    setShowColorPicker(true);
+  };
+
+  // カラーピッカーで色を選択したときの処理
+  const handleSelectColor = (selectedColor: string) => {
+    setColor(selectedColor);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100">
       <Head>
-        <title>Origina ぬりえ</title>
+        <title>塗り絵 - {id}</title>
         <meta name="description" content="オリジナルの塗り絵を楽しもう" />
       </Head>
 
@@ -605,7 +627,7 @@ export default function ColoringPage() {
               <RotateCcw className={`w-6 h-6 ${historyIndex === 0 ? 'text-gray-400' : 'text-gray-600'}`} />
             </button>
           </div>
-          <div className="flex flex-col space-y-2">
+          <div className="flex space-x-2">
             <button 
               onClick={() => setShowGuideDialog(true)}
               className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center"
@@ -664,16 +686,16 @@ export default function ColoringPage() {
         {/* カラーパレット */}
         <div className="flex justify-center p-3 border-t">
           <button
-            onClick={() => setShowColorPopup(true)}
+            onClick={handleOpenColorPalette}
             className="w-10 h-10 rounded-full mx-1 flex items-center justify-center bg-gray-200"
             aria-label="カラーパレットを開く"
           >
-            <Palette className="w-6 h-6" />
+            <Palette className="w-6 h-6 text-gray-600" />
           </button>
           
-          {COLOR_CATEGORIES[currentCategory].colors.slice(0, 5).map((colorOption) => (
+          {colors.map((colorOption, index) => (
             <button
-              key={colorOption}
+              key={index}
               onClick={() => setColor(colorOption)}
               className={`w-10 h-10 rounded-full mx-1 transition-transform ${
                 color === colorOption ? 'scale-110 ring-2 ring-gray-400' : ''
@@ -691,61 +713,54 @@ export default function ColoringPage() {
         {showColorPopup && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end justify-center">
             <div 
-              className="bg-white w-full max-w-md rounded-t-xl p-5 transform transition-transform duration-300 ease-out animate-slide-up"
+              className="bg-white rounded-t-xl w-full max-w-md p-5 transform transition-all duration-300 ease-out animate-slide-up"
               style={{ height: '60vh' }}
             >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium">カラーパレット</h3>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-semibold">Originaパレット</h3>
                 <button 
                   onClick={() => setShowColorPopup(false)}
                   className="p-2 rounded-full hover:bg-gray-100"
+                  aria-label="閉じる"
                 >
-                  <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
+                  <X className="w-5 h-5" />
                 </button>
               </div>
               
-              {/* カテゴリータブ */}
-              <div className="flex overflow-x-auto mb-4 pb-1 -mx-1">
+              <div 
+                className="space-y-3 overflow-y-auto"
+                style={{ maxHeight: 'calc(60vh - 120px)' }}
+              >
                 {Object.entries(COLOR_CATEGORIES).map(([key, category]) => (
                   <button
                     key={key}
-                    onClick={() => setCurrentCategory(key as keyof typeof COLOR_CATEGORIES)}
-                    className={`px-4 py-2 mx-1 rounded-full text-sm whitespace-nowrap transition-colors ${
-                      currentCategory === key 
-                        ? 'bg-blue-500 text-white' 
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
+                    onClick={() => handleSelectCategory(key as keyof typeof COLOR_CATEGORIES)}
+                    className="w-full py-4 px-6 text-left text-lg font-medium hover:bg-gray-100 rounded-md transition-colors flex justify-between items-center"
                   >
-                    {category.name}
+                    <span>{category.name}</span>
+                    <span className="text-gray-400">▶</span>
                   </button>
                 ))}
-              </div>
-              
-              <div className="grid grid-cols-5 gap-4 mt-6 overflow-y-auto" style={{ maxHeight: 'calc(60vh - 120px)' }}>
-                {COLOR_CATEGORIES[currentCategory].colors.map((colorOption) => (
-                  <button
-                    key={colorOption}
-                    onClick={() => {
-                      setColor(colorOption);
-                      setShowColorPopup(false);
-                    }}
-                    className={`w-14 h-14 rounded-full mx-auto transition-transform mt-2 mb-2 ${
-                      color === colorOption ? 'scale-110 ring-2 ring-gray-400' : ''
-                    }`}
-                    style={{ 
-                      backgroundColor: colorOption,
-                      border: colorOption === '#FFFFFF' ? '1px solid #ddd' : 'none'
-                    }}
-                    aria-label={`色を${colorOption}に変更`}
-                  />
-                ))}
+                
+                <button
+                  onClick={handleSelectOriginal}
+                  className="w-full py-4 px-6 text-left text-lg font-medium hover:bg-gray-100 rounded-md transition-colors flex justify-between items-center"
+                >
+                  <span>Original</span>
+                  <span className="text-gray-400">▶</span>
+                </button>
               </div>
             </div>
           </div>
         )}
+        
+        {/* カラーピッカー */}
+        <ColorPicker 
+          isOpen={showColorPicker}
+          onClose={() => setShowColorPicker(false)}
+          onSelectColor={handleSelectColor}
+          initialColor={color}
+        />
         
         {/* ガイドダイアログ */}
         <GuideDialog 
