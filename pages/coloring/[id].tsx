@@ -365,53 +365,132 @@ export default function ColoringPage() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
-    // モバイルデバイスかどうかを判定
+    // モバイルデバイスの種類を判定
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
     
-    if (isIOS && navigator.share) {
-      // iOS向けの処理（Web Share API使用）
-      try {
-        // キャンバスをBlobに変換
+    try {
+      // iOSの場合
+      if (isIOS && navigator.share) {
+        // iOS向けの処理（Web Share API使用）
+        try {
+          // キャンバスをBlobに変換
+          canvas.toBlob(async (blob) => {
+            if (!blob) {
+              throw new Error('Blob creation failed');
+            }
+            
+            const file = new File([blob], `colored-image-${id}.png`, { type: 'image/png' });
+            
+            // Web Share APIを使用して共有
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                files: [file],
+                title: '塗り絵の保存',
+                text: '写真に保存するには「写真に追加」を選択してください'
+              });
+            } else {
+              // ファイル共有に対応していない場合は代替方法
+              const dataUrl = canvas.toDataURL('image/png');
+              window.open(dataUrl, '_blank');
+              setTimeout(() => {
+                alert('画像を長押しして「写真に保存」を選択してください。');
+              }, 500);
+            }
+          }, 'image/png');
+        } catch (error) {
+          console.error('共有に失敗しました:', error);
+          
+          // 失敗した場合は代替方法を提案
+          const dataUrl = canvas.toDataURL('image/png');
+          window.open(dataUrl, '_blank');
+          setTimeout(() => {
+            alert('画像を長押しして「写真に保存」を選択してください。');
+          }, 500);
+        }
+      } 
+      // Androidの場合
+      else if (isAndroid) {
+        // Android向けの処理
         canvas.toBlob(async (blob) => {
           if (!blob) {
             throw new Error('Blob creation failed');
           }
           
-          const file = new File([blob], `colored-image-${id}.png`, { type: 'image/png' });
-          
-          // Web Share APIを使用して共有
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({
-              files: [file],
-              title: '塗り絵の保存',
-              text: '写真に保存するには「写真に追加」を選択してください'
-            });
-          } else {
-            // ファイル共有に対応していない場合は代替方法
+          try {
+            // Web Share APIが利用可能な場合
+            if (navigator.share) {
+              const file = new File([blob], `colored-image-${id}.png`, { type: 'image/png' });
+              
+              if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                  files: [file],
+                  title: '塗り絵の保存',
+                  text: 'ギャラリーに保存するには「保存」を選択してください'
+                });
+                return;
+              }
+            }
+            
+            // Web Share APIが使えない場合はダウンロードリンクを作成
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `colored-image-${id}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // 一部のAndroidブラウザでは上記の方法が機能しない場合があるため、
+            // 代替方法として新しいタブで開く
+            setTimeout(() => {
+              const dataUrl = canvas.toDataURL('image/png');
+              const newTab = window.open(dataUrl, '_blank');
+              
+              if (newTab) {
+                setTimeout(() => {
+                  alert('画像を長押しして「画像を保存」を選択してください。');
+                }, 500);
+              } else {
+                alert('ポップアップがブロックされました。設定を確認して再度お試しください。');
+              }
+            }, 1000);
+          } catch (error) {
+            console.error('保存に失敗しました:', error);
+            
+            // すべての方法が失敗した場合の最終手段
             const dataUrl = canvas.toDataURL('image/png');
             window.open(dataUrl, '_blank');
             setTimeout(() => {
-              alert('画像を長押しして「写真に保存」を選択してください。');
+              alert('画像を長押しして「画像を保存」を選択してください。');
             }, 500);
           }
         }, 'image/png');
-      } catch (error) {
-        console.error('共有に失敗しました:', error);
-        
-        // 失敗した場合は代替方法を提案
+      }
+      // その他のデバイス（PC等）
+      else {
+        // 通常のダウンロード処理
+        const dataUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = `colored-image-${id}.png`;
+        link.href = dataUrl;
+        link.click();
+      }
+    } catch (error) {
+      console.error('保存処理に失敗しました:', error);
+      alert('画像の保存に失敗しました。別の方法をお試しください。');
+      
+      // 最終的な代替手段
+      try {
         const dataUrl = canvas.toDataURL('image/png');
         window.open(dataUrl, '_blank');
         setTimeout(() => {
-          alert('画像を長押しして「写真に保存」を選択してください。');
+          alert('画像を長押しして保存してください。');
         }, 500);
+      } catch (e) {
+        console.error('代替保存方法も失敗:', e);
+        alert('画像の保存に失敗しました。お手数ですがスクリーンショットをご利用ください。');
       }
-    } else {
-      // その他のデバイス向け処理
-      const dataUrl = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.download = `colored-image-${id}.png`;
-      link.href = dataUrl;
-      link.click();
     }
   };
 
