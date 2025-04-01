@@ -501,7 +501,7 @@ export default function ColoringPage() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return;
     
     const img = new Image();
@@ -532,6 +532,10 @@ export default function ColoringPage() {
       // キャンバスのサイズを設定
       canvas.width = width;
       canvas.height = height;
+      
+      // 画像描画の品質を向上させる設定
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
       
       // 画像を描画
       ctx.drawImage(img, 0, 0, width, height);
@@ -675,7 +679,7 @@ export default function ColoringPage() {
                 transformOrigin: 'center center',
                 transition: isZooming ? 'none' : 'transform 0.1s ease-out',
                 willChange: 'transform',
-                imageRendering: 'pixelated',
+                imageRendering: 'auto',
                 maxWidth: '100%',
                 height: 'auto'
               }}
