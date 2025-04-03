@@ -1,25 +1,19 @@
-name: Code Review
-
-permissions:
-  issues: write
-  pull-requests: write
+name: pr-agent
 
 on:
   pull_request:
-    types:
-      - opened
-      - ready_for_review
-      - reopened
+    types: [opened, reopened, synchronize]
   issue_comment:
-    types:
-      - created
-      - edited
+    types: [created, edited]
+
+permissions:
+  pull-requests: write
+  issues: write
 
 jobs:
-  review:
+  pr_agent:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    name: Run pr agent on every pull request
+    name: Run PR Agent
     if: ${{ github.event.sender.type != 'Bot' }}
     env:
       COMMON_INSTRUCTIONS: >-
