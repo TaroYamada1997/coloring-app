@@ -380,7 +380,8 @@ export default function ColoringPage() {
               throw new Error('Blob creation failed');
             }
             
-            const file = new File([blob], `colored-image-${id}.png`, { type: 'image/png' });
+            const file = new File([blob], 'Originaのぬりえ.png', { type: 'image/png' });
+            console.log(file)
             
             // Web Share APIを使用して共有
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -420,7 +421,7 @@ export default function ColoringPage() {
           try {
             // Web Share APIが利用可能な場合
             if (navigator.share) {
-              const file = new File([blob], `colored-image-${id}.png`, { type: 'image/png' });
+              const file = new File([blob], 'Originaのぬりえ.png', { type: 'image/png' });
               
               if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 await navigator.share({
@@ -436,7 +437,7 @@ export default function ColoringPage() {
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `colored-image-${id}.png`;
+            link.download = 'Originaのぬりえ.png';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -472,7 +473,7 @@ export default function ColoringPage() {
         // 通常のダウンロード処理
         const dataUrl = canvas.toDataURL('image/png');
         const link = document.createElement('a');
-        link.download = `colored-image-${id}.png`;
+        link.download = 'Originaのぬりえ.png';
         link.href = dataUrl;
         link.click();
       }
@@ -638,6 +639,7 @@ export default function ColoringPage() {
             >
               <AlertCircle className="w-6 h-6 text-gray-600" />
             </button>
+            {/* ダウンロードボタン */}
             <button 
               onClick={saveImage}
               className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center"
