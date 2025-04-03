@@ -1,60 +1,37 @@
-name: Code Review
-
-permissions:
-  issues: write
-  pull-requests: write
+name: pr-agent
 
 on:
   pull_request:
-    types:
-      - opened
-      - ready_for_review
-      - reopened
+    types: [opened, reopened, synchronize]
   issue_comment:
-    types:
-      - created
-      - edited
+    types: [created, edited]
+
+permissions:
+  pull-requests: write
+  issues: write
 
 jobs:
-  review:
+  pr_agent:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    name: Run pr agent on every pull request
+    name: Run PR Agent
     if: ${{ github.event.sender.type != 'Bot' }}
-    env:
-      COMMON_INSTRUCTIONS: >-
-        日本語を使用してください。
-        あなたは [言語] や [フレームワーク] に精通したプログラマーです。
-        渡されたコードについて改善点を見つけ、変更する理由を説明した上で、変更後のコード例を示してください。
-        あなたが提案するコード（Suggestion Change）には、適切にインデントを含めるようにしてください。
-        [コード規約] に従ってください。
-        改善点がない場合には絶対にコメントをしないでください。
-
-        特に以下の点を指摘してください:
-          - 誤解を招いたり、実態を正確に表していない命名があるか
-          - 適度に変数を定義し自己ドキュメントされているか
-          - 冗長な書き方のコードがないか
-          - ファイル内で @var のようなインスタンス変数しか定義していないのに var のような変数名を使っていないか、またはその逆
-          - デバッグコードが残っていないか
-          - 読んで理解が難しい箇所にコメントが適切にされているか
-          - コメントの内容は日本語として読んでわかりやすく、簡潔に説明できているか
-          - 理解の難しい複雑な条件式が作られていないか
-          - 新しいメソッドを定義したときにテストコードを書いているか
-          - テスト内の説明文は、テストの内容をわかりやすく適切に表しているか
-          - 明らかなセキュリティの問題があるか
-
-        誰にとっても読みやすいコードになるよう、改善点を見つけたら積極的にレビューしてください。
-        あなたに渡されるコードは一部分であるため、未定義のメソッドやクラスなどの指摘については消極的にしてください。
     steps:
-      - name: PR Agent action step
-        id: pragent
+      - id: pr-agent
         uses: Codium-ai/pr-agent@main
         env:
-          OPENAI_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          github_action_config.auto_describe: false
-          github_action_config.auto_review: false
-          github_action_config.auto_improve: true
-          pr_description.extra_instructions: ${{ env.COMMON_INSTRUCTIONS }}
-          pr_reviewer.extra_instructions: ${{ env.COMMON_INSTRUCTIONS }}
-          pr_code_suggestions.extra_instructions: ${{ env.COMMON_INSTRUCTIONS }}
+          GITHUB_ACTION.AUTO_IMPROVE: true
+          PR_REVIEWER.EXTRA_INSTRUCTIONS: 'Please use Japanese in descriptions.'
+          PR_DESCRIPTION.EXTRA_INSTRUCTIONS: 'Please use Japanese in descriptions.'
+          pr_reviewer.extra_instructions: >-
+            日本語で回答してください。
+            以下の原則に従ってコメントしてください。
+            URLなどの構造化テキストを文字列結合で作ってはいけない。
+            console.log()等のデバッグコードを残してはいけない。
+          PR_CODE_SUGGESTIONS.EXTRA_INSTRUCTIONS: >-
+            日本語で回答してください。
+            以下の原則に従ってコメントしてください。
+            URLなどの構造化テキストを文字列結合で作ってはいけない。
+            console.log()等のデバッグコードを残してはいけない。
+          PR_ADD_DOCS.EXTRA_INSTRUCTIONS: 'Please use Japanese in descriptions.'
