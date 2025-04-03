@@ -1,5 +1,4 @@
 name: pr-agent
-
 on:
   pull_request:
     types: [opened, reopened, synchronize]
@@ -9,6 +8,7 @@ on:
 permissions:
   pull-requests: write
   issues: write
+  contents: read
 
 jobs:
   pr_agent:
@@ -21,10 +21,11 @@ jobs:
         env:
           OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_ACTION.AUTO_IMPROVE: true
+          PR_AGENT.AUTO_IMPROVE: true
+          PR_AGENT.AUTO_REVIEW: true
           PR_REVIEWER.EXTRA_INSTRUCTIONS: 'Please use Japanese in descriptions.'
           PR_DESCRIPTION.EXTRA_INSTRUCTIONS: 'Please use Japanese in descriptions.'
-          PR_CODE_SUGGESTIONS.EXTRA_INSTRUCTIONS: >-
+          PR_CODE_SUGGESTIONS.EXTRA_INSTRUCTIONS: |
             日本語で回答してください。
             以下の原則に従ってコメントしてください。
             URLなどの構造化テキストを文字列結合で作ってはいけない。
