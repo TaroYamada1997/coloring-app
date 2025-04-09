@@ -39,7 +39,7 @@ const GuideDialog: React.FC<GuideDialogProps> = ({ isOpen, onClose }) => {
             <p>右上のダウンロードボタンをタップすると、塗り絵を保存できます。</p>
             <ul className="list-disc pl-5 mt-1 text-sm">
               <li>iPhoneの場合：共有画面から「画像を保存」を選択。カメラロールに保存されます。</li>
-              <li>Androidの場合：xxxxxxxxxx</li>
+              <li>Androidの場合：保存ボタンをタップして保存します。</li>
             </ul>
           </div>
           
