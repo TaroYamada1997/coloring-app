@@ -669,6 +669,9 @@ export default function ColoringPage() {
           </div>
         </div>
         
+        {/* スペーサー - キャンバスとカラーパレットの間の余白を追加 */}
+        <div className="h-16"></div>
+        
         {/* カラーパレット */}
         <div className="flex justify-center p-3 border-t">
           <button
@@ -694,6 +697,9 @@ export default function ColoringPage() {
             />
           ))}
         </div>
+        
+        {/* 下部の余白を追加 */}
+        <div className="h-4"></div>
         
         {/* カラーポップアップ */}
         {showColorPopup && (
