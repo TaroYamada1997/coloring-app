@@ -57,11 +57,6 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
         </div>
         
         <div className="space-y-6">
-          <div 
-            className="w-full h-24 rounded-lg border border-gray-300"
-            style={{ backgroundColor: color }}
-          />
-          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               色を選択
