@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Head from 'next/head';
-import { ChevronLeft, ChevronRight, RotateCcw, Download, AlertCircle, Palette, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RotateCcw, Download, AlertCircle, Palette, X, HelpCircle } from 'lucide-react';
 import { useRouter } from 'next/router';
 import GuideDialog from '@/components/GuideDialog';
 import SplashScreen from '@/components/SplashScreen';
 import ColorPicker from '@/components/ColorPicker';
 import { COLOR_CATEGORIES } from '@/constants/Colors';
 import { COLORINGMAP } from '@/constants/Image';
+import NavigationGuide from '@/components/NavigationGuide';
 
 type Tool = 'brush' | 'eraser' | 'fill' | 'pan';
 
@@ -34,6 +35,7 @@ export default function ColoringPage() {
   const [showSplash, setShowSplash] = useState(true);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [colors, setColors] = useState<string[]>(COLOR_CATEGORIES.spring.colors);
+  const [showNavigationGuide, setShowNavigationGuide] = useState(false);
 
   const saveState = useCallback(() => {
     const canvas = canvasRef.current;
@@ -558,6 +560,16 @@ export default function ColoringPage() {
     setColor(selectedColor);
   };
 
+  // 初回訪問時にガイドを表示
+  useEffect(() => {
+    const hasSeenGuide = localStorage.getItem('hasSeenColoringGuide');
+    if (!hasSeenGuide && !showSplash) {
+      // スプラッシュ画面が終了した後にガイドを表示
+      setShowNavigationGuide(true);
+      localStorage.setItem('hasSeenColoringGuide', 'true');
+    }
+  }, [showSplash]);
+
   return (
     <div className="min-h-screen bg-gray-100">
       <Head>
@@ -614,12 +626,17 @@ export default function ColoringPage() {
           </div>
           <div className="flex space-x-2">
             <button 
+              onClick={() => setShowNavigationGuide(true)}
+              className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center"
+            >
+              <HelpCircle className="w-6 h-6 text-gray-600" />
+            </button>
+            <button 
               onClick={() => setShowGuideDialog(true)}
               className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center"
             >
               <AlertCircle className="w-6 h-6 text-gray-600" />
             </button>
-            {/* ダウンロードボタン */}
             <button 
               onClick={saveImage}
               className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center"
@@ -758,6 +775,12 @@ export default function ColoringPage() {
         <GuideDialog 
           isOpen={showGuideDialog} 
           onClose={() => setShowGuideDialog(false)} 
+        />
+        
+        {/* 操作ガイド */}
+        <NavigationGuide 
+          isOpen={showNavigationGuide} 
+          onClose={() => setShowNavigationGuide(false)} 
         />
       </div>
     </div>
