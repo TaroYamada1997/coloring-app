@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Head from 'next/head';
-import { ChevronLeft, ChevronRight, RotateCcw, Download, AlertCircle, Palette, X, HelpCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RotateCcw, Download, Palette, X, HelpCircle } from 'lucide-react';
 import { useRouter } from 'next/router';
-import GuideDialog from '@/components/GuideDialog';
 import SplashScreen from '@/components/SplashScreen';
 import ColorPicker from '@/components/ColorPicker';
 import { COLOR_CATEGORIES } from '@/constants/Colors';
@@ -31,7 +30,6 @@ export default function ColoringPage() {
   const panStartRef = useRef({ x: 0, y: 0 });
   const lastPanRef = useRef({ x: 0, y: 0 });
   const [showColorPopup, setShowColorPopup] = useState(false);
-  const [showGuideDialog, setShowGuideDialog] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [colors, setColors] = useState<string[]>(COLOR_CATEGORIES.spring.colors);
@@ -632,12 +630,6 @@ export default function ColoringPage() {
               <HelpCircle className="w-6 h-6 text-gray-600" />
             </button>
             <button 
-              onClick={() => setShowGuideDialog(true)}
-              className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center"
-            >
-              <AlertCircle className="w-6 h-6 text-gray-600" />
-            </button>
-            <button 
               onClick={saveImage}
               className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center"
             >
@@ -769,12 +761,6 @@ export default function ColoringPage() {
           onClose={() => setShowColorPicker(false)}
           onSelectColor={handleSelectColor}
           initialColor={color}
-        />
-        
-        {/* ガイドダイアログ */}
-        <GuideDialog 
-          isOpen={showGuideDialog} 
-          onClose={() => setShowGuideDialog(false)} 
         />
         
         {/* 操作ガイド */}
