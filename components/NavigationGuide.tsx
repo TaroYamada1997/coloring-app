@@ -12,13 +12,13 @@ const NavigationGuide: React.FC<NavigationGuideProps> = ({ isOpen, onClose }) =>
   const guideSteps = [
     {
       title: '基本操作',
-      content: '塗り絵アプリの基本的な操作方法を説明します。\n右にスワイプして次のガイドを見ることができます。',
+      content: '基本的な操作方法を説明します。',
       icon: <Hand className="w-12 h-12 text-blue-500 mx-auto mb-4" />
     },
     {
       title: '色の選択',
-      content: 'パレットアイコンをタップすると、\nカラーパレットが表示されます。\n季節ごとのカラーやオリジナルカラーを選択できます。',
-      icon: <Palette className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+      content: 'パレットアイコンをタップすると、\nカラーパレットが表示されます。\n季節ごとのカラーやオリジナルカラーを\n選択できます。',
+      icon: <Palette className="w-12 h-12 text-gray-500 mx-auto mb-4" />
     },
     {
       title: '拡大・縮小',
