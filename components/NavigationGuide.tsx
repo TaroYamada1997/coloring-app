@@ -65,7 +65,7 @@ const NavigationGuide: React.FC<NavigationGuideProps> = ({ isOpen, onClose }) =>
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg w-full max-w-md p-6 relative">
+      <div className="bg-white rounded-lg w-full max-w-md p-6 relative" style={{ height: '420px' }}>
         {/* 閉じるボタン */}
         <button 
           onClick={onClose}
@@ -83,17 +83,17 @@ const NavigationGuide: React.FC<NavigationGuideProps> = ({ isOpen, onClose }) =>
           ></div>
         </div>
 
-        {/* ガイド内容 */}
-        <div className="text-center py-4">
+        {/* ガイド内容 - 固定高さのコンテナ */}
+        <div className="text-center py-4" style={{ height: '280px' }}>
           {guideSteps[currentStep].icon}
           <h3 className="text-xl font-bold mb-4">{guideSteps[currentStep].title}</h3>
-          <p className="text-gray-600 mb-8 whitespace-pre-line leading-relaxed">
+          <p className="text-gray-600 whitespace-pre-line leading-relaxed" style={{ height: '120px', overflow: 'auto' }}>
             {guideSteps[currentStep].content}
           </p>
         </div>
 
         {/* ナビゲーションボタン */}
-        <div className="flex justify-between">
+        <div className="flex justify-between absolute bottom-6 left-6 right-6">
           <button
             onClick={prevStep}
             className={`px-4 py-2 rounded-lg ${
