@@ -33,7 +33,9 @@ export default function ColoringPage() {
   const [showSplash, setShowSplash] = useState(true);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [colors, setColors] = useState<string[]>(COLOR_CATEGORIES.spring.colors);
+  const [recentColors, setRecentColors] = useState<string[]>([]);
   const [showNavigationGuide, setShowNavigationGuide] = useState(false);
+  const [colorMode, setColorMode] = useState<'seasonal' | 'recent'>('seasonal');
 
   const saveState = useCallback(() => {
     const canvas = canvasRef.current;
@@ -544,18 +546,35 @@ export default function ColoringPage() {
   // カテゴリーを選択したときの処理
   const handleSelectCategory = (categoryKey: keyof typeof COLOR_CATEGORIES) => {
     setColors(COLOR_CATEGORIES[categoryKey].colors);
+    setColorMode('seasonal');
     setShowColorPopup(false);
   };
 
   // オリジナルカラーピッカーを選択したときの処理
   const handleSelectOriginal = () => {
-    setShowColorPopup(false);
     setShowColorPicker(true);
+    setShowColorPopup(false);
+    // ここではモードを変更しない（色を選択した後に変更される）
   };
 
   // カラーピッカーで色を選択したときの処理
   const handleSelectColor = (selectedColor: string) => {
     setColor(selectedColor);
+    
+    // 最近使用した色を更新
+    setRecentColors(prev => {
+      // 既に同じ色が存在する場合は削除
+      const filteredColors = prev.filter(c => c !== selectedColor);
+      // 新しい色を先頭に追加し、最大5色に制限
+      const updatedColors = [selectedColor, ...filteredColors].slice(0, 5);
+      
+      // 最近使用した色があれば、モードを最近使用した色に切り替え
+      if (updatedColors.length > 0) {
+        setColorMode('recent');
+      }
+      
+      return updatedColors;
+    });
   };
 
   // 初回訪問時にガイドを表示
@@ -691,20 +710,40 @@ export default function ColoringPage() {
             <Palette className="w-6 h-6 text-gray-600" />
           </button>
           
-          {colors.map((colorOption, index) => (
-            <button
-              key={index}
-              onClick={() => setColor(colorOption)}
-              className={`w-10 h-10 rounded-full mx-1 transition-transform ${
-                color === colorOption ? 'scale-110 ring-2 ring-gray-400' : ''
-              }`}
-              style={{ 
-                backgroundColor: colorOption,
-                border: colorOption === '#FFFFFF' ? '1px solid #ddd' : 'none'
-              }}
-              aria-label={`色を${colorOption}に変更`}
-            />
-          ))}
+          {/* 季節カラーまたは最近使用した色を表示 */}
+          {colorMode === 'seasonal' ? (
+            // 季節カラー
+            colors.map((colorOption, index) => (
+              <button
+                key={`seasonal-${index}`}
+                onClick={() => handleSelectColor(colorOption)}
+                className={`w-10 h-10 rounded-full mx-1 transition-transform ${
+                  color === colorOption ? 'scale-110 ring-2 ring-gray-400' : ''
+                }`}
+                style={{ 
+                  backgroundColor: colorOption,
+                  border: colorOption === '#FFFFFF' ? '1px solid #ddd' : 'none'
+                }}
+                aria-label={`色を${colorOption}に変更`}
+              />
+            ))
+          ) : (
+            // 最近使用した色
+            recentColors.map((recentColor, index) => (
+              <button
+                key={`recent-${index}`}
+                onClick={() => handleSelectColor(recentColor)}
+                className={`w-10 h-10 rounded-full mx-1 transition-transform ${
+                  color === recentColor ? 'scale-110 ring-2 ring-gray-400' : ''
+                }`}
+                style={{ 
+                  backgroundColor: recentColor,
+                  border: recentColor === '#FFFFFF' ? '1px solid #ddd' : 'none'
+                }}
+                aria-label={`最近使用した色${recentColor}に変更`}
+              />
+            ))
+          )}
         </div>
         
         {/* 下部の余白を追加 */}
