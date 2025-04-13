@@ -554,27 +554,26 @@ export default function ColoringPage() {
   const handleSelectOriginal = () => {
     setShowColorPicker(true);
     setShowColorPopup(false);
-    // ここではモードを変更しない（色を選択した後に変更される）
   };
 
   // カラーピッカーで色を選択したときの処理
   const handleSelectColor = (selectedColor: string) => {
     setColor(selectedColor);
     
-    // 最近使用した色を更新
+    // 最近使用した色を更新（表示モードは変更しない）
     setRecentColors(prev => {
       // 既に同じ色が存在する場合は削除
       const filteredColors = prev.filter(c => c !== selectedColor);
       // 新しい色を先頭に追加し、最大5色に制限
-      const updatedColors = [selectedColor, ...filteredColors].slice(0, 5);
-      
-      // 最近使用した色があれば、モードを最近使用した色に切り替え
-      if (updatedColors.length > 0) {
-        setColorMode('recent');
-      }
-      
-      return updatedColors;
+      return [selectedColor, ...filteredColors].slice(0, 5);
     });
+  };
+
+  // カラーピッカーから色を選択した後の処理
+  const handleColorPickerSelect = (selectedColor: string) => {
+    handleSelectColor(selectedColor);
+    // カラーピッカーから選択した場合のみ、表示モードを最近使用した色に変更
+    setColorMode('recent');
   };
 
   // 初回訪問時にガイドを表示
@@ -798,7 +797,7 @@ export default function ColoringPage() {
         <ColorPicker 
           isOpen={showColorPicker}
           onClose={() => setShowColorPicker(false)}
-          onSelectColor={handleSelectColor}
+          onSelectColor={handleColorPickerSelect}
           initialColor={color}
         />
         
