@@ -18,7 +18,7 @@ const NavigationGuide: React.FC<NavigationGuideProps> = ({ isOpen, onClose }) =>
     {
       title: '色の選択',
       content: 'パレットアイコンをタップすると、\nカラーパレットが表示されます。\n季節ごとのカラーやオリジナルカラーを\n選択できます。',
-      icon: <Palette className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+      icon: <Palette className="w-12 h-12 text-blue-500 mx-auto mb-4" />
     },
     {
       title: '拡大・縮小',
