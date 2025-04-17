@@ -4,7 +4,7 @@ export const COLORINGMAP = {
       title: 'JPG表紙イラスト',
     },
     '2': {
-      path: '/ぬりえイラスト20250417.png',
+      path: '/ぬりえイラスト20250417.PNG',
       title: 'ぬりえイラスト',
     },
     '3': {
