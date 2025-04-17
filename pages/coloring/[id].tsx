@@ -492,13 +492,19 @@ export default function ColoringPage() {
     img.src = COLORINGMAP[id as keyof typeof COLORINGMAP]?.path || '';
     
     img.onload = () => {
+      // 元の画像サイズを保持
+      const originalWidth = img.width;
+      const originalHeight = img.height;
+      
+      // 画面サイズに基づいて適切なキャンバスサイズを計算
       const maxWidth = 375; // iPhone SEの幅
       const maxHeight = 520;
       
-      // 画像のアスペクト比を維持しながらサイズを調整
-      let width = img.width;
-      let height = img.height;
+      // アスペクト比を維持しながらサイズを調整
+      let width = originalWidth;
+      let height = originalHeight;
       
+      // 画像が大きすぎる場合は縮小
       if (width > maxWidth) {
         const ratio = maxWidth / width;
         width = maxWidth;
@@ -511,7 +517,7 @@ export default function ColoringPage() {
         width = width * ratio;
       }
       
-      // キャンバスのサイズを設定
+      // キャンバスのサイズを設定（元のサイズを維持）
       canvas.width = width;
       canvas.height = height;
       
@@ -531,7 +537,14 @@ export default function ColoringPage() {
       const canvasWrapper = canvasWrapperRef.current;
       if (canvasWrapper) {
         const wrapperWidth = canvasWrapper.clientWidth;
-        const initialScale = Math.min(1, wrapperWidth / width * 0.9);
+        const wrapperHeight = canvasWrapper.clientHeight;
+        
+        // 幅と高さの両方に基づいてスケールを計算
+        const scaleX = wrapperWidth / width * 0.9;
+        const scaleY = wrapperHeight / height * 0.9;
+        
+        // 小さい方のスケールを使用して、キャンバス全体が表示されるようにする
+        const initialScale = Math.min(1, Math.min(scaleX, scaleY));
         setScale(initialScale);
       }
     };
@@ -655,7 +668,7 @@ export default function ColoringPage() {
           </div>
         </div>
 
-        {/* キャンバス部分 - 高さを大きくする */}
+        {/* キャンバス部分 */}
         <div
           ref={canvasWrapperRef}
           className="relative w-full overflow-hidden h-[calc(75vh-120px)]"
@@ -687,7 +700,7 @@ export default function ColoringPage() {
                 transformOrigin: 'center center',
                 transition: isZooming ? 'none' : 'transform 0.1s ease-out',
                 willChange: 'transform',
-                imageRendering: 'auto',
+                imageRendering: 'crisp-edges', // 画質向上のための設定
                 maxWidth: '100%',
                 height: 'auto'
               }}
