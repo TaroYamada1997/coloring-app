@@ -482,52 +482,121 @@ export default function ColoringPage() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    // デバイスピクセル比を取得
+    const dpr = window.devicePixelRatio || 1;
+    
+    const ctx = canvas.getContext('2d', { willReadFrequently: true, alpha: true });
     if (!ctx) return;
     
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    // ID=2の画像パスを直接指定
-    img.src = COLORINGMAP['2'].path;
+    // ローディング状態を示す関数
+    const showLoading = () => {
+      ctx.fillStyle = '#f0f0f0';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#333';
+      ctx.font = '20px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('画像を読み込み中...', canvas.width / 2, canvas.height / 2);
+    };
     
-    img.onload = () => {
-      // 元の画像サイズを保持
-      const originalWidth = img.width;
-      const originalHeight = img.height;
+    // キャンバスの初期サイズを設定（後で調整）
+    canvas.width = 800;
+    canvas.height = 600;
+    showLoading();
+    
+    // 画像読み込みの再試行機能を実装
+    const loadImage = (retryCount = 0, maxRetries = 3) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
       
-      // キャンバスのサイズを設定
-      canvas.width = originalWidth;
-      canvas.height = originalHeight;
+      // 画像のキャッシュを防ぐためにタイムスタンプを追加
+      const cacheBuster = new Date().getTime();
+      img.src = `${COLORINGMAP['2'].path}?v=${cacheBuster}`;
       
-      // 画像描画の品質を向上させる設定
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      
-      // 画像を描画
-      ctx.drawImage(img, 0, 0, originalWidth, originalHeight);
-      
-      // 初期状態を履歴に保存
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      setHistory([imageData]);
-      setHistoryIndex(0);
-      
-      // 初期スケールを調整（画面に合わせる）
-      const canvasWrapper = canvasWrapperRef.current;
-      if (canvasWrapper) {
-        const wrapperWidth = canvasWrapper.clientWidth;
-        const wrapperHeight = canvasWrapper.clientHeight;
+      // 読み込み成功時の処理
+      img.onload = () => {
+        console.log('画像の読み込みに成功しました');
         
-        // 幅と高さの両方に基づいてスケールを計算
-        const scaleX = wrapperWidth / canvas.width * 0.9;
-        const scaleY = wrapperHeight / canvas.height * 0.9;
+        // 元の画像サイズを保持
+        const originalWidth = img.width;
+        const originalHeight = img.height;
         
-        // 小さい方のスケールを使用して、キャンバス全体が表示されるようにする
-        const initialScale = Math.min(1.7, Math.min(scaleX, scaleY) * 2.5);
-        setScale(initialScale);
+        // キャンバスのサイズを設定
+        canvas.width = originalWidth;
+        canvas.height = originalHeight;
         
-        // 中央に配置するためのパン位置を計算
-        setPan({ x: 0, y: 0 });
+        // 画像描画の品質を向上させる設定
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        
+        // 画像を描画
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, originalWidth, originalHeight);
+        
+        // 初期状態を履歴に保存
+        try {
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          setHistory([imageData]);
+          setHistoryIndex(0);
+        } catch (e) {
+          console.error('画像データの取得に失敗しました:', e);
+        }
+        
+        // 初期スケールを調整（画面に合わせる）
+        const canvasWrapper = canvasWrapperRef.current;
+        if (canvasWrapper) {
+          const wrapperWidth = canvasWrapper.clientWidth;
+          const wrapperHeight = canvasWrapper.clientHeight;
+          
+          // 幅と高さの両方に基づいてスケールを計算
+          const scaleX = wrapperWidth / canvas.width * 0.9;
+          const scaleY = wrapperHeight / canvas.height * 0.9;
+          
+          // 小さい方のスケールを使用して、キャンバス全体が表示されるようにする
+          const initialScale = Math.min(1.7, Math.min(scaleX, scaleY) * 2.5);
+          setScale(initialScale);
+          
+          // 中央に配置するためのパン位置を計算
+          setPan({ x: 0, y: 0 });
+        }
+      };
+      
+      // 読み込み失敗時の処理
+      img.onerror = () => {
+        console.error(`画像の読み込みに失敗しました (試行: ${retryCount + 1}/${maxRetries + 1})`);
+        
+        if (retryCount < maxRetries) {
+          // 少し待ってから再試行
+          setTimeout(() => {
+            loadImage(retryCount + 1, maxRetries);
+          }, 1000);
+        } else {
+          // 最大再試行回数を超えた場合
+          ctx.fillStyle = '#f0f0f0';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#ff0000';
+          ctx.font = '20px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText('画像の読み込みに失敗しました', canvas.width / 2, canvas.height / 2);
+          ctx.fillText('ページを再読み込みしてください', canvas.width / 2, canvas.height / 2 + 30);
+        }
+      };
+      
+      // 読み込みの優先度を設定
+      if ('loading' in img) {
+        img.loading = 'eager';
       }
+      
+      if ('decoding' in img) {
+        img.decoding = 'sync';
+      }
+    };
+    
+    // 画像読み込みを開始
+    loadImage();
+    
+    // クリーンアップ関数
+    return () => {
+      // 必要に応じてリソースをクリーンアップ
     };
   }, []); // 依存配列を空にして初回のみ実行
 
