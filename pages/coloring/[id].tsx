@@ -479,8 +479,6 @@ export default function ColoringPage() {
 
   // 初期画像の読み込み時に最初の状態を保存
   useEffect(() => {
-    if (!id || typeof id !== 'string') return;
-    
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -489,19 +487,24 @@ export default function ColoringPage() {
     
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.src = COLORINGMAP[id as keyof typeof COLORINGMAP]?.path || '';
+    // ID=2の画像パスを直接指定
+    img.src = COLORINGMAP['2'].path;
     
     img.onload = () => {
-      // キャンバスのサイズを設定（元のサイズを維持）
-      canvas.width = img.width;
-      canvas.height = img.height;
+      // 元の画像サイズを保持
+      const originalWidth = img.width;
+      const originalHeight = img.height;
+      
+      // キャンバスのサイズを設定
+      canvas.width = originalWidth;
+      canvas.height = originalHeight;
       
       // 画像描画の品質を向上させる設定
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       
       // 画像を描画
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, originalWidth, originalHeight);
       
       // 初期状態を履歴に保存
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -526,7 +529,7 @@ export default function ColoringPage() {
         setPan({ x: 0, y: 0 });
       }
     };
-  }, [id]);
+  }, []); // 依存配列を空にして初回のみ実行
 
   // カラーパレットダイアログを表示
   const handleOpenColorPalette = () => {
@@ -575,25 +578,6 @@ export default function ColoringPage() {
       localStorage.setItem('hasSeenColoringGuide', 'true');
     }
   }, [showSplash]);
-
-  // コンポーネントの先頭で画像の事前読み込み
-  useEffect(() => {
-    if (!id || typeof id !== 'string') return;
-    
-    // 画像を事前に読み込む
-    const preloadImage = new Image();
-    preloadImage.crossOrigin = 'anonymous';
-    preloadImage.src = COLORINGMAP[id as keyof typeof COLORINGMAP]?.path || '';
-    
-    // 画像の品質を最適化するためのオプション
-    if ('loading' in HTMLImageElement.prototype) {
-      preloadImage.loading = 'eager';
-    }
-    
-    if ('decoding' in HTMLImageElement.prototype) {
-      preloadImage.decoding = 'sync';
-    }
-  }, [id]);
 
   return (
     <div className="min-h-screen bg-gray-100">
