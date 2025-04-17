@@ -496,26 +496,9 @@ export default function ColoringPage() {
       const originalWidth = img.width;
       const originalHeight = img.height;
       
-      // 画面サイズに基づいて適切なキャンバスサイズを計算
-      const maxWidth = 375; // iPhone SEの幅
-      const maxHeight = 520;
-      
       // アスペクト比を維持しながらサイズを調整
-      let width = originalWidth;
-      let height = originalHeight;
-      
-      // 画像が大きすぎる場合は縮小
-      if (width > maxWidth) {
-        const ratio = maxWidth / width;
-        width = maxWidth;
-        height = height * ratio;
-      }
-      
-      if (height > maxHeight) {
-        const ratio = maxHeight / height;
-        height = maxHeight;
-        width = width * ratio;
-      }
+      const width = originalWidth;
+      const height = originalHeight;
       
       // キャンバスのサイズを設定（元のサイズを維持）
       canvas.width = width;
@@ -544,8 +527,12 @@ export default function ColoringPage() {
         const scaleY = wrapperHeight / height * 0.9;
         
         // 小さい方のスケールを使用して、キャンバス全体が表示されるようにする
-        const initialScale = Math.min(1, Math.min(scaleX, scaleY));
+        // ここで拡大率を調整 - 1.7倍に設定
+        const initialScale = Math.min(1.7, Math.min(scaleX, scaleY) * 2.5);
         setScale(initialScale);
+        
+        // 中央に配置するためのパン位置を計算
+        setPan({ x: 0, y: 0 });
       }
     };
   }, [id]);
@@ -668,7 +655,7 @@ export default function ColoringPage() {
           </div>
         </div>
 
-        {/* キャンバス部分 */}
+        {/* キャンバス部分 - 高さだけ調整 */}
         <div
           ref={canvasWrapperRef}
           className="relative w-full overflow-hidden h-[calc(75vh-120px)]"
@@ -700,7 +687,6 @@ export default function ColoringPage() {
                 transformOrigin: 'center center',
                 transition: isZooming ? 'none' : 'transform 0.1s ease-out',
                 willChange: 'transform',
-                imageRendering: 'crisp-edges', // 画質向上のための設定
                 maxWidth: '100%',
                 height: 'auto'
               }}
