@@ -492,9 +492,8 @@ export default function ColoringPage() {
     img.src = COLORINGMAP[id as keyof typeof COLORINGMAP]?.path || '';
     
     img.onload = () => {
-      // iPhone SEの画面サイズに合わせる
       const maxWidth = 375; // iPhone SEの幅
-      const maxHeight = 450; // 画面の高さから他の要素の高さを引いた値
+      const maxHeight = 520;
       
       // 画像のアスペクト比を維持しながらサイズを調整
       let width = img.width;
@@ -656,10 +655,10 @@ export default function ColoringPage() {
           </div>
         </div>
 
-        {/* キャンバス部分 */}
+        {/* キャンバス部分 - 高さを大きくする */}
         <div
           ref={canvasWrapperRef}
-          className="relative w-full overflow-hidden h-[calc(70vh-120px)]"
+          className="relative w-full overflow-hidden h-[calc(75vh-120px)]"
           onTouchStart={handlePinchZoomStart}
           onTouchMove={handlePinchZoomMove}
           onTouchEnd={handlePinchZoomEnd}
@@ -695,9 +694,6 @@ export default function ColoringPage() {
             />
           </div>
         </div>
-        
-        {/* スペーサー - キャンバスとカラーパレットの間の余白を追加 */}
-        <div className="h-16"></div>
         
         {/* カラーパレット */}
         <div className="flex justify-center p-3 border-t">
