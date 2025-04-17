@@ -492,24 +492,16 @@ export default function ColoringPage() {
     img.src = COLORINGMAP[id as keyof typeof COLORINGMAP]?.path || '';
     
     img.onload = () => {
-      // 元の画像サイズを保持
-      const originalWidth = img.width;
-      const originalHeight = img.height;
-      
-      // アスペクト比を維持しながらサイズを調整
-      const width = originalWidth;
-      const height = originalHeight;
-      
       // キャンバスのサイズを設定（元のサイズを維持）
-      canvas.width = width;
-      canvas.height = height;
+      canvas.width = img.width;
+      canvas.height = img.height;
       
       // 画像描画の品質を向上させる設定
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       
       // 画像を描画
-      ctx.drawImage(img, 0, 0, width, height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       
       // 初期状態を履歴に保存
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -523,11 +515,10 @@ export default function ColoringPage() {
         const wrapperHeight = canvasWrapper.clientHeight;
         
         // 幅と高さの両方に基づいてスケールを計算
-        const scaleX = wrapperWidth / width * 0.9;
-        const scaleY = wrapperHeight / height * 0.9;
+        const scaleX = wrapperWidth / canvas.width * 0.9;
+        const scaleY = wrapperHeight / canvas.height * 0.9;
         
         // 小さい方のスケールを使用して、キャンバス全体が表示されるようにする
-        // ここで拡大率を調整 - 1.7倍に設定
         const initialScale = Math.min(1.7, Math.min(scaleX, scaleY) * 2.5);
         setScale(initialScale);
         
@@ -584,6 +575,25 @@ export default function ColoringPage() {
       localStorage.setItem('hasSeenColoringGuide', 'true');
     }
   }, [showSplash]);
+
+  // コンポーネントの先頭で画像の事前読み込み
+  useEffect(() => {
+    if (!id || typeof id !== 'string') return;
+    
+    // 画像を事前に読み込む
+    const preloadImage = new Image();
+    preloadImage.crossOrigin = 'anonymous';
+    preloadImage.src = COLORINGMAP[id as keyof typeof COLORINGMAP]?.path || '';
+    
+    // 画像の品質を最適化するためのオプション
+    if ('loading' in HTMLImageElement.prototype) {
+      preloadImage.loading = 'eager';
+    }
+    
+    if ('decoding' in HTMLImageElement.prototype) {
+      preloadImage.decoding = 'sync';
+    }
+  }, [id]);
 
   return (
     <div className="min-h-screen bg-gray-100">
