@@ -33,6 +33,7 @@ export default function ColoringPage() {
   const [recentColors, setRecentColors] = useState<string[]>([]);
   const [showNavigationGuide, setShowNavigationGuide] = useState(false);
   const [colorMode, setColorMode] = useState<'seasonal' | 'recent'>('seasonal');
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const saveState = useCallback(() => {
     const canvas = canvasRef.current;
@@ -482,20 +483,9 @@ export default function ColoringPage() {
     const ctx = canvas.getContext('2d', { willReadFrequently: true, alpha: true });
     if (!ctx) return;
     
-    // ローディング状態を示す関数
-    const showLoading = () => {
-      ctx.fillStyle = '#f0f0f0';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#333';
-      ctx.font = '20px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText('画像を読み込み中...', canvas.width / 2, canvas.height / 2);
-    };
-    
     // キャンバスの初期サイズを設定
     canvas.width = 800;
     canvas.height = 600;
-    showLoading();
     
     // 画像読み込み関数
     const loadImage = () => {
@@ -514,9 +504,21 @@ export default function ColoringPage() {
         const originalWidth = img.width;
         const originalHeight = img.height;
         
-        // キャンバスのサイズを設定（物理ピクセル）
-        canvas.width = originalWidth;
-        canvas.height = originalHeight;
+        // 画像が大きすぎる場合は適切なサイズに調整
+        let targetWidth = originalWidth;
+        let targetHeight = originalHeight;
+        
+        // 最大サイズを設定（例: 幅800px）
+        const maxWidth = 800;
+        if (targetWidth > maxWidth) {
+          const ratio = maxWidth / targetWidth;
+          targetWidth = maxWidth;
+          targetHeight = Math.floor(targetHeight * ratio);
+        }
+        
+        // キャンバスのサイズを設定
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
         
         // 画像描画の品質を向上させる設定
         ctx.imageSmoothingEnabled = true;
@@ -524,7 +526,7 @@ export default function ColoringPage() {
         
         // 画像を描画
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, originalWidth, originalHeight);
+        ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
         
         // 初期状態を履歴に保存
         try {
@@ -534,10 +536,14 @@ export default function ColoringPage() {
           
           // 元の画像データをセッションストレージに保存
           sessionStorage.setItem('originalImageData', JSON.stringify({
-            width: originalWidth,
-            height: originalHeight,
+            width: targetWidth,
+            height: targetHeight,
             timestamp: Date.now()
           }));
+          
+          // 初期画像データも保存
+          const initialDataUrl = canvas.toDataURL('image/png');
+          sessionStorage.setItem('initialCanvasState', initialDataUrl);
         } catch (e) {
           console.error('画像データの取得に失敗しました:', e);
         }
@@ -552,12 +558,22 @@ export default function ColoringPage() {
           const scaleX = wrapperWidth / canvas.width * 0.9;
           const scaleY = wrapperHeight / canvas.height * 0.9;
           
-          // 小さい方のスケールを使用して、キャンバス全体が表示されるようにする
-          const initialScale = Math.min(1.7, Math.min(scaleX, scaleY) * 2.5);
+          // バランスの良いスケール値を設定（1.2倍）
+          const initialScale = Math.min(1.2, Math.min(scaleX, scaleY) * 1.2);
           setScale(initialScale);
           
           // 中央に配置するためのパン位置を計算
           setPan({ x: 0, y: 0 });
+        }
+        
+        // 画像の読み込みが完了したことを記録
+        setImageLoaded(true);
+        
+        // 離脱から戻ってきた場合はスプラッシュスクリーンを表示しない
+        const isReturning = sessionStorage.getItem('isReturningVisit') === 'true';
+        if (isReturning) {
+          sessionStorage.removeItem('isReturningVisit');
+          setShowSplash(false);
         }
       };
       
@@ -571,78 +587,99 @@ export default function ColoringPage() {
       }
     };
     
-    // ページの可視性変更イベントを監視する関数
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        console.log('ページが再表示されました');
+    // 現在のキャンバス状態を保存する関数
+    const saveCurrentCanvasState = () => {
+      try {
+        const dataUrl = canvas.toDataURL('image/png');
+        sessionStorage.setItem('currentCanvasState', dataUrl);
+        sessionStorage.setItem('canvasStateTimestamp', Date.now().toString());
+        console.log('キャンバス状態を保存しました');
+      } catch (e) {
+        console.error('キャンバス状態の保存に失敗しました:', e);
+      }
+    };
+    
+    // 保存されたキャンバス状態を復元する関数
+    const restoreCanvasState = () => {
+      const savedState = sessionStorage.getItem('currentCanvasState');
+      if (!savedState) return false;
+      
+      const img = new Image();
+      img.onload = () => {
+        // キャンバスのサイズを設定
+        canvas.width = img.width;
+        canvas.height = img.height;
         
-        // セッションストレージから元の画像情報を取得
-        const originalImageDataStr = sessionStorage.getItem('originalImageData');
-        if (!originalImageDataStr) return;
+        // 画像描画の品質を向上させる設定
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        
+        // 画像を描画
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
         
         try {
-          const originalImageData = JSON.parse(originalImageDataStr);
-          const { width, height } = originalImageData;
-          
-          // 現在のキャンバスの状態を取得
-          const currentImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          
-          // キャンバスのサイズが変わっていないか確認
-          if (canvas.width !== width || canvas.height !== height) {
-            console.log('キャンバスのサイズが変更されています。修正します。');
-            
-            // 現在の内容を一時的に保存
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = canvas.width;
-            tempCanvas.height = canvas.height;
-            const tempCtx = tempCanvas.getContext('2d');
-            if (!tempCtx) return;
-            tempCtx.putImageData(currentImageData, 0, 0);
-            
-            // キャンバスのサイズを元のサイズに戻す
-            canvas.width = width;
-            canvas.height = height;
-            
-            // 画像描画の品質を向上させる設定
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-            
-            // 保存した内容を元のサイズで描画し直す
-            ctx.drawImage(tempCanvas, 0, 0, width, height);
-            
-            // 履歴を更新
-            const newImageData = ctx.getImageData(0, 0, width, height);
-            setHistory(prev => {
-              const newHistory = [...prev];
-              newHistory[historyIndex] = newImageData;
-              return newHistory;
-            });
-          } else {
-            // サイズは同じだが、画質が低下している可能性があるため、
-            // 現在の内容を一度クリアして再描画
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = width;
-            tempCanvas.height = height;
-            const tempCtx = tempCanvas.getContext('2d');
-            if (!tempCtx) return;
-            tempCtx.putImageData(currentImageData, 0, 0);
-            
-            // 画像描画の品質を向上させる設定を再適用
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-            
-            // 一度クリアして再描画
-            ctx.clearRect(0, 0, width, height);
-            ctx.drawImage(tempCanvas, 0, 0);
-          }
+          // 現在の状態を取得して履歴を更新
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          setHistory([imageData]);
+          setHistoryIndex(0);
         } catch (e) {
-          console.error('キャンバス状態の復元に失敗しました:', e);
+          console.error('画像データの取得に失敗しました:', e);
+        }
+        
+        // 初期スケールを調整（画面に合わせる）
+        const canvasWrapper = canvasWrapperRef.current;
+        if (canvasWrapper) {
+          const wrapperWidth = canvasWrapper.clientWidth;
+          const wrapperHeight = canvasWrapper.clientHeight;
+          
+          // 幅と高さの両方に基づいてスケールを計算
+          const scaleX = wrapperWidth / canvas.width * 2.5;
+          const scaleY = wrapperHeight / canvas.height * 2.5;
+          
+          // バランスの良いスケール値を設定（1.2倍）
+          const initialScale = Math.min(1.2, Math.min(scaleX, scaleY) * 1.2);
+          setScale(initialScale);
+        }
+        
+        // 画像の読み込みが完了したことを記録
+        setImageLoaded(true);
+      };
+      img.src = savedState;
+      return true;
+    };
+    
+    // ページの可視性変更イベントを監視する関数
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        // ページが非表示になる時に現在の状態を保存
+        saveCurrentCanvasState();
+        
+        // 次回表示時に戻ってきたことを記録
+        sessionStorage.setItem('isReturningVisit', 'true');
+      } else if (document.visibilityState === 'visible') {
+        // ページが表示された時に戻ってきたかチェック
+        const isReturning = sessionStorage.getItem('isReturningVisit') === 'true';
+        
+        if (isReturning) {
+          // スプラッシュスクリーンを表示
+          setShowSplash(true);
+          
+          // 保存された状態を復元するか、新しく画像を読み込む
+          if (!restoreCanvasState()) {
+            loadImage();
+          }
         }
       }
     };
     
-    // 画像を読み込む
-    loadImage();
+    // 初回の画像読み込み
+    const savedState = sessionStorage.getItem('currentCanvasState');
+    if (savedState) {
+      restoreCanvasState();
+    } else {
+      loadImage();
+    }
     
     // ページの可視性変更イベントリスナーを登録
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -651,7 +688,29 @@ export default function ColoringPage() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [historyIndex]); // 依存配列を空にして初回のみ実行
+  }, []); // 依存配列を空にして初回のみ実行
+
+  // スプラッシュスクリーン完了時のハンドラ
+  const handleSplashComplete = () => {
+    // 画像が読み込まれていればスプラッシュスクリーンを非表示にする
+    if (imageLoaded) {
+      setShowSplash(false);
+    } else {
+      // 画像がまだ読み込まれていない場合は、読み込みが完了するまで待機
+      const checkInterval = setInterval(() => {
+        if (imageLoaded) {
+          clearInterval(checkInterval);
+          setShowSplash(false);
+        }
+      }, 100);
+      
+      // 安全のため、最大10秒後には強制的に非表示にする
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        setShowSplash(false);
+      }, 10000);
+    }
+  };
 
   // カラーパレットダイアログを表示
   const handleOpenColorPalette = () => {
@@ -708,11 +767,11 @@ export default function ColoringPage() {
         <meta name="description" content="オリジナルの塗り絵を楽しもう" />
       </Head>
 
-      {/* スプラッシュ画面 */}
+      {/* スプラッシュスクリーン */}
       {showSplash && (
         <SplashScreen 
           logoPath="/Origina-logo_tate.png" 
-          onComplete={() => setShowSplash(false)} 
+          onComplete={handleSplashComplete} 
         />
       )}
 
