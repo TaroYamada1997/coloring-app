@@ -58,7 +58,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ logoPath, onComplete }) => 
             transition={{ duration: 0.5, delay: 0.7 }}
             className="text-gray-600 text-center px-8"
           >
-            あなただけのオリジナル塗り絵を楽しもう
+            あなただけのオリジナルぬりえを楽しもう
           </motion.p>
           
           <motion.div

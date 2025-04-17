@@ -69,23 +69,6 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
             />
           </div>
           
-          {recentColors.length > 0 && (
-            <div>
-              <p className="text-sm font-medium text-gray-700 mb-2">最近使用した色</p>
-              <div className="flex space-x-2">
-                {recentColors.map((recentColor, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setColor(recentColor)}
-                    className="w-8 h-8 rounded-full border border-gray-300"
-                    style={{ backgroundColor: recentColor }}
-                    aria-label={`色を${recentColor}に変更`}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-          
           <button
             onClick={handleSelectColor}
             className="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
