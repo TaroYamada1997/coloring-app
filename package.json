@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@ar-js-org/ar.js": "^3.4.7",
@@ -30,7 +31,7 @@
     "eslint": "^9.20.0",
     "eslint-config-next": "15.1.6",
     "postcss": "^8",
-    "prettier": "^3.4.2",
+    "prettier": "^3.5.3",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
   }
