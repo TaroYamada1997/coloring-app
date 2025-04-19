@@ -1,6 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Head from 'next/head';
-import { ChevronLeft, ChevronRight, RotateCcw, Download, Palette, X, HelpCircle } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  RotateCcw,
+  Download,
+  Palette,
+  X,
+  HelpCircle,
+} from 'lucide-react';
 import SplashScreen from '@/components/SplashScreen';
 import ColorPicker from '@/components/ColorPicker';
 import { COLOR_CATEGORIES } from '@/constants/Colors';
@@ -29,7 +37,9 @@ export default function ColoringPage() {
   const [showColorPopup, setShowColorPopup] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const [showColorPicker, setShowColorPicker] = useState(false);
-  const [colors, setColors] = useState<string[]>(COLOR_CATEGORIES.spring.colors);
+  const [colors, setColors] = useState<string[]>(
+    COLOR_CATEGORIES.spring.colors,
+  );
   const [recentColors, setRecentColors] = useState<string[]>([]);
   const [showNavigationGuide, setShowNavigationGuide] = useState(false);
   const [colorMode, setColorMode] = useState<'seasonal' | 'recent'>('seasonal');
@@ -216,18 +226,22 @@ export default function ColoringPage() {
       setIsPanning(true);
       panStartRef.current = {
         x: event.touches[0].clientX - lastPanRef.current.x,
-        y: event.touches[0].clientY - lastPanRef.current.y
+        y: event.touches[0].clientY - lastPanRef.current.y,
       };
     }
   };
 
   const handlePanMove = (event: React.TouchEvent) => {
     // パンモードまたは描画中でない場合のみパン操作を有効にする
-    if (event.touches.length === 1 && (tool === 'pan' || !isDrawing) && isPanning) {
+    if (
+      event.touches.length === 1 &&
+      (tool === 'pan' || !isDrawing) &&
+      isPanning
+    ) {
       event.preventDefault();
       const newX = event.touches[0].clientX - panStartRef.current.x;
       const newY = event.touches[0].clientY - panStartRef.current.y;
-      
+
       // requestAnimationFrameを使用してスムーズな更新
       requestAnimationFrame(() => {
         setPan({ x: newX, y: newY });
@@ -285,7 +299,7 @@ export default function ColoringPage() {
   const startDrawing = (event: React.TouchEvent | React.MouseEvent) => {
     // ズーム中は描画を開始しない
     if (isZooming) return;
-    
+
     // パンモードの場合は描画しない
     if (tool === 'pan') return;
 
@@ -343,11 +357,11 @@ export default function ColoringPage() {
   const saveImage = async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     // モバイルデバイスの種類を判定
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const isAndroid = /Android/.test(navigator.userAgent);
-    
+
     try {
       // iOSの場合
       if (isIOS && navigator.share) {
@@ -358,16 +372,18 @@ export default function ColoringPage() {
             if (!blob) {
               throw new Error('Blob creation failed');
             }
-            
-            const file = new File([blob], 'Originaのぬりえ.png', { type: 'image/png' });
-            console.log(file)
-            
+
+            const file = new File([blob], 'Originaのぬりえ.png', {
+              type: 'image/png',
+            });
+            console.log(file);
+
             // Web Share APIを使用して共有
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
               await navigator.share({
                 files: [file],
                 title: '塗り絵の保存',
-                text: '写真に保存するには「写真に追加」を選択してください'
+                text: '写真に保存するには「写真に追加」を選択してください',
               });
             } else {
               // ファイル共有に対応していない場合は代替方法
@@ -380,7 +396,7 @@ export default function ColoringPage() {
           }, 'image/png');
         } catch (error) {
           console.error('共有に失敗しました:', error);
-          
+
           // 失敗した場合は代替方法を提案
           const dataUrl = canvas.toDataURL('image/png');
           window.open(dataUrl, '_blank');
@@ -388,7 +404,7 @@ export default function ColoringPage() {
             alert('画像を長押しして「写真に保存」を選択してください。');
           }, 500);
         }
-      } 
+      }
       // Androidの場合
       else if (isAndroid) {
         // Android向けの処理
@@ -396,22 +412,24 @@ export default function ColoringPage() {
           if (!blob) {
             throw new Error('Blob creation failed');
           }
-          
+
           try {
             // Web Share APIが利用可能な場合
             if (navigator.share) {
-              const file = new File([blob], 'Originaのぬりえ.png', { type: 'image/png' });
-              
+              const file = new File([blob], 'Originaのぬりえ.png', {
+                type: 'image/png',
+              });
+
               if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 await navigator.share({
                   files: [file],
                   title: '塗り絵の保存',
-                  text: 'ギャラリーに保存するには「保存」を選択してください'
+                  text: 'ギャラリーに保存するには「保存」を選択してください',
                 });
                 return;
               }
             }
-            
+
             // Web Share APIが使えない場合はダウンロードリンクを作成
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
@@ -420,24 +438,26 @@ export default function ColoringPage() {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
+
             // 一部のAndroidブラウザでは上記の方法が機能しない場合があるため、
             // 代替方法として新しいタブで開く
             setTimeout(() => {
               const dataUrl = canvas.toDataURL('image/png');
               const newTab = window.open(dataUrl, '_blank');
-              
+
               if (newTab) {
                 setTimeout(() => {
                   alert('画像を長押しして「画像を保存」を選択してください。');
                 }, 500);
               } else {
-                alert('ポップアップがブロックされました。設定を確認して再度お試しください。');
+                alert(
+                  'ポップアップがブロックされました。設定を確認して再度お試しください。',
+                );
               }
             }, 1000);
           } catch (error) {
             console.error('保存に失敗しました:', error);
-            
+
             // すべての方法が失敗した場合の最終手段
             const dataUrl = canvas.toDataURL('image/png');
             window.open(dataUrl, '_blank');
@@ -459,7 +479,7 @@ export default function ColoringPage() {
     } catch (error) {
       console.error('保存処理に失敗しました:', error);
       alert('画像の保存に失敗しました。別の方法をお試しください。');
-      
+
       // 最終的な代替手段
       try {
         const dataUrl = canvas.toDataURL('image/png');
@@ -469,59 +489,55 @@ export default function ColoringPage() {
         }, 500);
       } catch (e) {
         console.error('代替保存方法も失敗:', e);
-        alert('画像の保存に失敗しました。お手数ですがスクリーンショットをご利用ください。');
+        alert(
+          '画像の保存に失敗しました。お手数ですがスクリーンショットをご利用ください。',
+        );
       }
     }
   };
 
-  // 初期画像の読み込み時に最初の状態を保存
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return;
-    
+
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    // ID=2の画像パスを直接指定
     img.src = COLORINGMAP['2'].path;
-    
+
     img.onload = () => {
       // 元の画像サイズを保持
       const originalWidth = img.width;
       const originalHeight = img.height;
-      
-      // キャンバスのサイズを設定
+
+      // キャンバスのサイズをデバイスピクセル比を考慮して設定
       canvas.width = originalWidth;
       canvas.height = originalHeight;
-      
-      // 画像描画の品質を向上させる設定
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      
+
       // 画像を描画
       ctx.drawImage(img, 0, 0, originalWidth, originalHeight);
-      
+
       // 初期状態を履歴に保存
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       setHistory([imageData]);
       setHistoryIndex(0);
-      
+
       // 初期スケールを調整（画面に合わせる）
       const canvasWrapper = canvasWrapperRef.current;
       if (canvasWrapper) {
         const wrapperWidth = canvasWrapper.clientWidth;
         const wrapperHeight = canvasWrapper.clientHeight;
-        
+
         // 幅と高さの両方に基づいてスケールを計算
-        const scaleX = wrapperWidth / canvas.width * 0.9;
-        const scaleY = wrapperHeight / canvas.height * 0.9;
-        
+        const scaleX = (wrapperWidth / canvas.width) * 0.9;
+        const scaleY = (wrapperHeight / canvas.height) * 0.9;
+
         // 小さい方のスケールを使用して、キャンバス全体が表示されるようにする
         const initialScale = Math.min(1.7, Math.min(scaleX, scaleY) * 2.5);
         setScale(initialScale);
-        
+
         // 中央に配置するためのパン位置を計算
         setPan({ x: 0, y: 0 });
       }
@@ -549,11 +565,11 @@ export default function ColoringPage() {
   // カラーピッカーで色を選択したときの処理
   const handleSelectColor = (selectedColor: string) => {
     setColor(selectedColor);
-    
+
     // 最近使用した色を更新（表示モードは変更しない）
-    setRecentColors(prev => {
+    setRecentColors((prev) => {
       // 既に同じ色が存在する場合は削除
-      const filteredColors = prev.filter(c => c !== selectedColor);
+      const filteredColors = prev.filter((c) => c !== selectedColor);
       // 新しい色を先頭に追加し、最大5色に制限
       return [selectedColor, ...filteredColors].slice(0, 5);
     });
@@ -585,9 +601,9 @@ export default function ColoringPage() {
 
       {/* スプラッシュ画面 */}
       {showSplash && (
-        <SplashScreen 
-          logoPath="/Origina-logo_tate.png" 
-          onComplete={() => setShowSplash(false)} 
+        <SplashScreen
+          logoPath="/Origina-logo_tate.png"
+          onComplete={() => setShowSplash(false)}
         />
       )}
 
@@ -595,27 +611,35 @@ export default function ColoringPage() {
         {/* ヘッダーツールバー */}
         <div className="flex justify-between items-center p-3">
           <div className="flex space-x-2">
-            <button 
+            <button
               onClick={undo}
               onTouchStart={handleUndoTouch}
               disabled={historyIndex <= 0}
               className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                historyIndex <= 0 ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 active:bg-gray-400'
+                historyIndex <= 0
+                  ? 'bg-gray-200 cursor-not-allowed'
+                  : 'bg-gray-300 active:bg-gray-400'
               }`}
             >
-              <ChevronLeft className={`w-6 h-6 ${historyIndex <= 0 ? 'text-gray-400' : 'text-gray-600'}`} />
+              <ChevronLeft
+                className={`w-6 h-6 ${historyIndex <= 0 ? 'text-gray-400' : 'text-gray-600'}`}
+              />
             </button>
-            <button 
+            <button
               onClick={redo}
               onTouchStart={handleRedoTouch}
               disabled={historyIndex >= history.length - 1}
               className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                historyIndex >= history.length - 1 ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 active:bg-gray-400'
+                historyIndex >= history.length - 1
+                  ? 'bg-gray-200 cursor-not-allowed'
+                  : 'bg-gray-300 active:bg-gray-400'
               }`}
             >
-              <ChevronRight className={`w-6 h-6 ${historyIndex >= history.length - 1 ? 'text-gray-400' : 'text-gray-600'}`} />
+              <ChevronRight
+                className={`w-6 h-6 ${historyIndex >= history.length - 1 ? 'text-gray-400' : 'text-gray-600'}`}
+              />
             </button>
-            <button 
+            <button
               onClick={() => {
                 if (window.confirm('塗り絵を最初の状態に戻しますか？')) {
                   reset();
@@ -624,20 +648,24 @@ export default function ColoringPage() {
               onTouchStart={handleResetTouch}
               disabled={historyIndex === 0}
               className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                historyIndex === 0 ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 active:bg-gray-400'
+                historyIndex === 0
+                  ? 'bg-gray-200 cursor-not-allowed'
+                  : 'bg-gray-300 active:bg-gray-400'
               }`}
             >
-              <RotateCcw className={`w-6 h-6 ${historyIndex === 0 ? 'text-gray-400' : 'text-gray-600'}`} />
+              <RotateCcw
+                className={`w-6 h-6 ${historyIndex === 0 ? 'text-gray-400' : 'text-gray-600'}`}
+              />
             </button>
           </div>
           <div className="flex space-x-2">
-            <button 
+            <button
               onClick={() => setShowNavigationGuide(true)}
               className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center"
             >
               <HelpCircle className="w-6 h-6 text-gray-600" />
             </button>
-            <button 
+            <button
               onClick={saveImage}
               className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center"
             >
@@ -655,12 +683,13 @@ export default function ColoringPage() {
           onTouchEnd={handlePinchZoomEnd}
           onTouchCancel={handlePinchZoomEnd}
         >
-          <div 
+          <div
             className="min-w-[100%] flex justify-center items-center h-full"
             style={{
               transform: `translate(${pan.x}px, ${pan.y}px)`,
-              transition: isPanning || isZooming ? 'none' : 'transform 0.1s ease-out',
-              willChange: 'transform'
+              transition:
+                isPanning || isZooming ? 'none' : 'transform 0.1s ease-out',
+              willChange: 'transform',
             }}
           >
             <canvas
@@ -679,12 +708,15 @@ export default function ColoringPage() {
                 transition: isZooming ? 'none' : 'transform 0.1s ease-out',
                 willChange: 'transform',
                 maxWidth: '100%',
-                height: 'auto'
+                height: 'auto',
+                imageRendering: 'pixelated', // 鮮明なエッジのレンダリング
+                WebkitFontSmoothing: 'none',
+                MozOsxFontSmoothing: 'grayscale',
               }}
             />
           </div>
         </div>
-        
+
         {/* カラーパレット */}
         <div className="flex justify-center p-3 border-t">
           <button
@@ -694,56 +726,60 @@ export default function ColoringPage() {
           >
             <Palette className="w-6 h-6 text-gray-600" />
           </button>
-          
+
           {/* 季節カラーまたは最近使用した色を表示 */}
-          {colorMode === 'seasonal' ? (
-            // 季節カラー
-            colors.map((colorOption, index) => (
-              <button
-                key={`seasonal-${index}`}
-                onClick={() => handleSelectColor(colorOption)}
-                className={`w-10 h-10 rounded-full mx-1 transition-transform ${
-                  color === colorOption ? 'scale-110 ring-2 ring-gray-400' : ''
-                }`}
-                style={{ 
-                  backgroundColor: colorOption,
-                  border: colorOption === '#FFFFFF' ? '1px solid #ddd' : 'none'
-                }}
-                aria-label={`色を${colorOption}に変更`}
-              />
-            ))
-          ) : (
-            // 最近使用した色
-            recentColors.map((recentColor, index) => (
-              <button
-                key={`recent-${index}`}
-                onClick={() => handleSelectColor(recentColor)}
-                className={`w-10 h-10 rounded-full mx-1 transition-transform ${
-                  color === recentColor ? 'scale-110 ring-2 ring-gray-400' : ''
-                }`}
-                style={{ 
-                  backgroundColor: recentColor,
-                  border: recentColor === '#FFFFFF' ? '1px solid #ddd' : 'none'
-                }}
-                aria-label={`最近使用した色${recentColor}に変更`}
-              />
-            ))
-          )}
+          {colorMode === 'seasonal'
+            ? // 季節カラー
+              colors.map((colorOption, index) => (
+                <button
+                  key={`seasonal-${index}`}
+                  onClick={() => handleSelectColor(colorOption)}
+                  className={`w-10 h-10 rounded-full mx-1 transition-transform ${
+                    color === colorOption
+                      ? 'scale-110 ring-2 ring-gray-400'
+                      : ''
+                  }`}
+                  style={{
+                    backgroundColor: colorOption,
+                    border:
+                      colorOption === '#FFFFFF' ? '1px solid #ddd' : 'none',
+                  }}
+                  aria-label={`色を${colorOption}に変更`}
+                />
+              ))
+            : // 最近使用した色
+              recentColors.map((recentColor, index) => (
+                <button
+                  key={`recent-${index}`}
+                  onClick={() => handleSelectColor(recentColor)}
+                  className={`w-10 h-10 rounded-full mx-1 transition-transform ${
+                    color === recentColor
+                      ? 'scale-110 ring-2 ring-gray-400'
+                      : ''
+                  }`}
+                  style={{
+                    backgroundColor: recentColor,
+                    border:
+                      recentColor === '#FFFFFF' ? '1px solid #ddd' : 'none',
+                  }}
+                  aria-label={`最近使用した色${recentColor}に変更`}
+                />
+              ))}
         </div>
-        
+
         {/* 下部の余白を追加 */}
         <div className="h-4"></div>
-        
+
         {/* カラーポップアップ */}
         {showColorPopup && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end justify-center">
-            <div 
+            <div
               className="bg-white rounded-t-xl w-full max-w-md p-5 transform transition-all duration-300 ease-out animate-slide-up"
               style={{ height: '60vh' }}
             >
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-semibold">Originaパレット</h3>
-                <button 
+                <button
                   onClick={() => setShowColorPopup(false)}
                   className="p-2 rounded-full hover:bg-gray-100"
                   aria-label="閉じる"
@@ -751,22 +787,24 @@ export default function ColoringPage() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              
-              <div 
+
+              <div
                 className="space-y-3 overflow-y-auto"
                 style={{ maxHeight: 'calc(60vh - 120px)' }}
               >
                 {Object.entries(COLOR_CATEGORIES).map(([key, category]) => (
                   <button
                     key={key}
-                    onClick={() => handleSelectCategory(key as keyof typeof COLOR_CATEGORIES)}
+                    onClick={() =>
+                      handleSelectCategory(key as keyof typeof COLOR_CATEGORIES)
+                    }
                     className="w-full py-4 px-6 text-left text-lg font-medium hover:bg-gray-100 rounded-md transition-colors flex justify-between items-center"
                   >
                     <span>{category.name}</span>
                     <span className="text-gray-400">▶</span>
                   </button>
                 ))}
-                
+
                 <button
                   onClick={handleSelectOriginal}
                   className="w-full py-4 px-6 text-left text-lg font-medium hover:bg-gray-100 rounded-md transition-colors flex justify-between items-center"
@@ -778,19 +816,19 @@ export default function ColoringPage() {
             </div>
           </div>
         )}
-        
+
         {/* カラーピッカー */}
-        <ColorPicker 
+        <ColorPicker
           isOpen={showColorPicker}
           onClose={() => setShowColorPicker(false)}
           onSelectColor={handleColorPickerSelect}
           initialColor={color}
         />
-        
+
         {/* 操作ガイド */}
-        <NavigationGuide 
-          isOpen={showNavigationGuide} 
-          onClose={() => setShowNavigationGuide(false)} 
+        <NavigationGuide
+          isOpen={showNavigationGuide}
+          onClose={() => setShowNavigationGuide(false)}
         />
       </div>
     </div>
