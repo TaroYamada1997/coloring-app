@@ -733,7 +733,7 @@ export default function ColoringPage() {
               colors.map((colorOption, index) => (
                 <button
                   key={`seasonal-${index}`}
-                  onClick={() => handleSelectColor(colorOption)}
+                  onClick={() => setColor(colorOption)}
                   className={`w-10 h-10 rounded-full mx-1 transition-transform ${
                     color === colorOption
                       ? 'scale-110 ring-2 ring-gray-400'
