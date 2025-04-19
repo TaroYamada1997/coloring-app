@@ -24,7 +24,7 @@ const NavigationGuide: React.FC<NavigationGuideProps> = ({
   const guideSteps = [
     {
       title: '基本操作',
-      content: '基本的な操作方法を説明します。',
+      content: '基本的な操作方法を説明します。\n\n推奨環境: iOS 18以上',
       icon: <Hand className="w-12 h-12 text-blue-500 mx-auto mb-4" />,
     },
     {
